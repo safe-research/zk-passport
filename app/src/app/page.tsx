@@ -460,7 +460,7 @@ function App() {
       onError,
     } = queryBuilder
     // .disclose('birthdate')
-    // .eq('birthdate', new Date('1994-11-24'))
+    // .eq('birthdate', new D ate('1990-01-01'))
       .done();
 
     setQueryUrl(url);
@@ -489,8 +489,6 @@ function App() {
 
     onResult(async ({ result, uniqueIdentifier, verified, queryResultErrors }) => {
       console.log("Result", result);
-      console.log("Result", result?.birthdate?.disclose?.result);
-      console.log("date", new Date('1994-11-24T00:00:00Z'))
       console.log("Unique identifier", uniqueIdentifier);
       console.log("Verified", verified);
       console.log("Query result errors", queryResultErrors);
