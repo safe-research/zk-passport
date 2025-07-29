@@ -216,6 +216,7 @@ contract SafeRecovery {
         ProofVerificationParams calldata params,
         address safeAddress
     ) external {
+        require(msg.sender == safeAddress, "Only Safe can register a guardian");
         if (safeAddress == address(0)) revert ZeroAddress();
         
         // Verify the ZK proof
