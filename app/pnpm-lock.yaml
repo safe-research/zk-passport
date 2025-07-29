@@ -11,12 +11,15 @@ importers:
       '@safe-global/protocol-kit':
         specifier: ^6.1.0
         version: 6.1.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+      '@safe-global/types-kit':
+        specifier: ^3.0.0
+        version: 3.0.0(typescript@5.8.3)(zod@3.25.76)
       '@tanstack/react-query':
         specifier: 5.45.1
         version: 5.45.1(react@18.3.1)
       '@zkpassport/sdk':
-        specifier: ^0.6.0
-        version: 0.6.0(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        specifier: ^0.7.0
+        version: 0.7.0(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       next:
         specifier: 14.2.4
         version: 14.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -78,8 +81,8 @@ packages:
   '@adraffy/ens-normalize@1.11.0':
     resolution: {integrity: sha512-/3DDPKHqqIqxUULp8yP4zODUY1i+2xvVWsv8A79xGWdCAG+8sb0hRh0Rk2QyOJUnnbyPUAZYcpBuRe3nS2OIUg==}
 
-  '@aztec/bb.js@1.0.0-nightly.20250712':
-    resolution: {integrity: sha512-jRybpb49geZwvJrO1EqNAx2j/tEWdrgFgW/eu50s2fxEbPVcGXqGXJj8XW+sCYpptj1YO8nYN2us6s/3WlOASA==}
+  '@aztec/bb.js@1.0.0-nightly.20250723':
+    resolution: {integrity: sha512-ETBVf5ufA3g9uBVdW/g4bcPTjI56S/LPpf6Aw1lJOt62da8otBm6m9L5rSwOMql2GGPi0suUstwph7iK2YdA5Q==}
     hasBin: true
 
   '@babel/runtime@7.28.2':
@@ -786,16 +789,16 @@ packages:
   '@zkpassport/poseidon2@0.6.2':
     resolution: {integrity: sha512-6sFHX9kAcrmDmBEEndvjZ8DA9FomunirQ5oCV6oD7bqr/lP0n0OBSRn86SZgQBXwRR+vq7sk16y31OgRBIOJ5Q==}
 
-  '@zkpassport/registry@0.6.1':
-    resolution: {integrity: sha512-VWpaWwOvi1jNHrq/0tXp43TOg+yQn40jsLCzdRAW4V48Ff3hjlbIMZYIlvHtQE+cfwlCWdoi43EpRuU7Vjeiew==}
+  '@zkpassport/registry@0.8.0':
+    resolution: {integrity: sha512-4PPeIJlyaqGc4IESqtRnnBxCkC8cr2IF21WxMI4QAZNho+enNvQkbL2m/vw1dVn1tRxzNxZZkK4DE7QovESskQ==}
     peerDependencies:
       typescript: ^5.0.0
 
-  '@zkpassport/sdk@0.6.0':
-    resolution: {integrity: sha512-ZVpYiAUkZg2VZ+cZoCgBBHgSpkMSIeNEM0dPZqv1cVr6pIWsV5nQjNDu9dQnBEG0hE2IxrWlcQFStuX3Q356Ng==}
+  '@zkpassport/sdk@0.7.0':
+    resolution: {integrity: sha512-9+BxsKNqTdHwm72K45hxp7vVnJvcQYs3C3uus/O0iSczd8u5Hmn+ZCejqH0QBzpkzwbTSaO3pQaNCYKsIG+lhQ==}
 
-  '@zkpassport/utils@0.17.1':
-    resolution: {integrity: sha512-0GND10FFmHq6RcqgJovVzOxwSMv6MRzdUOMwF35IJ/z4htEXZPGOZvvlOhHkbb3L9Uwub08t5H0OD9DzBRrbxg==}
+  '@zkpassport/utils@0.19.0':
+    resolution: {integrity: sha512-S6YmCk9XN5cRA1tgeN31mMPASqgad78XzLzmAld8rWpStwGRSAXtAwi8oie0KIPrdJIuCM8fNoJWWhF0MfxYJg==}
     peerDependencies:
       typescript: ^5.0.0
 
@@ -1543,8 +1546,8 @@ packages:
   preact@10.24.2:
     resolution: {integrity: sha512-1cSoF0aCC8uaARATfrlz4VCBqE8LwZwRfLgkxJOQwAlQt6ayTmi0D9OF7nXid1POI5SZidFuG9CnlXbDfLqY/Q==}
 
-  preact@10.26.9:
-    resolution: {integrity: sha512-SSjF9vcnF27mJK1XyFMNJzFd5u3pQiATFqoaDy03XuN00u4ziveVVEGt5RKJrDR8MHE/wJo9Nnad56RLzS2RMA==}
+  preact@10.27.0:
+    resolution: {integrity: sha512-/DTYoB6mwwgPytiqQTh/7SFRL98ZdiD8Sk8zIUVOxtwq4oWcwrcd1uno9fE/zZmUaUrFNYzbH14CPebOz9tZQw==}
 
   prettier@3.6.2:
     resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
@@ -2081,7 +2084,7 @@ snapshots:
 
   '@adraffy/ens-normalize@1.11.0': {}
 
-  '@aztec/bb.js@1.0.0-nightly.20250712':
+  '@aztec/bb.js@1.0.0-nightly.20250723':
     dependencies:
       comlink: 4.4.2
       commander: 12.1.0
@@ -2124,7 +2127,7 @@ snapshots:
       eth-json-rpc-filters: 6.0.1
       eventemitter3: 5.0.1
       keccak: 3.0.4
-      preact: 10.26.9
+      preact: 10.27.0
       sha.js: 2.4.12
     transitivePeerDependencies:
       - supports-color
@@ -3617,9 +3620,9 @@ snapshots:
 
   '@zkpassport/poseidon2@0.6.2': {}
 
-  '@zkpassport/registry@0.6.1(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)':
+  '@zkpassport/registry@0.8.0(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
-      '@zkpassport/utils': 0.17.1(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
+      '@zkpassport/utils': 0.19.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
       debug: 4.4.1(supports-color@9.4.0)
       typescript: 5.8.3
     transitivePeerDependencies:
@@ -3627,15 +3630,15 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@zkpassport/sdk@0.6.0(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+  '@zkpassport/sdk@0.7.0(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
     dependencies:
-      '@aztec/bb.js': 1.0.0-nightly.20250712
+      '@aztec/bb.js': 1.0.0-nightly.20250723
       '@noble/ciphers': 1.3.0
       '@noble/hashes': 1.8.0
       '@noble/secp256k1': 2.3.0
       '@obsidion/bridge': 0.10.4(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)
-      '@zkpassport/registry': 0.6.1(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)
-      '@zkpassport/utils': 0.17.1(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
+      '@zkpassport/registry': 0.8.0(bufferutil@4.0.9)(supports-color@9.4.0)(typescript@5.8.3)(utf-8-validate@5.0.10)
+      '@zkpassport/utils': 0.19.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)
       buffer: 6.0.3
       i18n-iso-countries: 7.14.0
       pako: 2.1.0
@@ -3648,7 +3651,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@zkpassport/utils@0.17.1(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)':
+  '@zkpassport/utils@0.19.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)':
     dependencies:
       '@lapo/asn1js': 2.0.5
       '@noble/ciphers': 1.3.0
@@ -4476,7 +4479,7 @@ snapshots:
 
   preact@10.24.2: {}
 
-  preact@10.26.9: {}
+  preact@10.27.0: {}
 
   prettier@3.6.2: {}
 
