@@ -100,7 +100,7 @@ const ZK_MODULE_ABI = [
         "type": "address"
       }
     ],
-    "name": "Recover",
+    "name": "recover",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -566,7 +566,7 @@ function App() {
         await writeContract({
           address: ZK_MODULE_ADDRESS as `0x${string}`,
           abi: ZK_MODULE_ABI,
-          functionName: 'Recover',
+          functionName: 'recover',
           // @ts-ignore - Type compatibility between ZKPassport SDK and wagmi
           args: [
             wagmiVerifierParams,
