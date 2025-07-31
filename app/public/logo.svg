@@ -1,0 +1,20 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/>
+  
+  <!-- Shield shape (representing security/ZK proof) -->
+  <path d="M64 20 L44 32 L44 56 C44 72 54 86 64 90 C74 86 84 72 84 56 L84 32 Z" fill="#10B981" stroke="#059669" stroke-width="1.5"/>
+  
+  <!-- Passport book -->
+  <rect x="48" y="50" width="32" height="44" rx="2" fill="#EF4444" stroke="#DC2626" stroke-width="1.5"/>
+  <rect x="52" y="54" width="24" height="2" fill="#FEE2E2"/>
+  <rect x="52" y="58" width="20" height="1.5" fill="#FEE2E2"/>
+  <rect x="52" y="62" width="18" height="1.5" fill="#FEE2E2"/>
+  
+  <!-- ZK symbol -->
+  <text x="64" y="45" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">ZK</text>
+  <text x="64" y="85" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="8" font-weight="normal">ID</text>
+  
+  <!-- Checkmark for verification -->
+  <path d="M58 75 L62 79 L70 71" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,29 +1,30 @@
-# Self Protocol Workshop - Identity Verification with Zero-Knowledge Proofs
+# ZK Passport Safe Recovery - Identity Verification with Zero-Knowledge Proofs
 
-A comprehensive workshop project demonstrating how to build a decentralized identity verification system using [Self Protocol](https://self.xyz/). This project showcases the integration of zero-knowledge proof-based passport verification in a Next.js application with optional smart contract integration on the Celo blockchain.
+A comprehensive project demonstrating how to build a decentralized identity verification system using [ZK Passport](https://zkpassport.id/). This project showcases the integration of zero-knowledge proof-based passport verification in a Next.js application with Safe wallet recovery functionality on the Sepolia testnet.
 
-## 🎯 Workshop Overview
+## 🎯 Project Overview
 
-This workshop teaches developers how to:
+This project teaches developers how to:
 - Build privacy-preserving identity verification flows
-- Integrate Self Protocol's SDK for passport-based verification
+- Integrate ZK Passport SDK for passport-based verification
 - Create user-friendly QR code-based authentication
-- Handle zero-knowledge proofs for age, nationality, and OFAC compliance checks
-- (Optional) Deploy smart contracts for on-chain verification attestations
+- Handle zero-knowledge proofs for identity verification
+- Implement Safe wallet recovery using ZK identity proofs
+- Deploy and interact with smart contracts on Sepolia testnet
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │                 │     │                 │     │                 │
-│  Next.js App    │────▶│  Self Protocol  │────▶│  Smart Contract │
-│  (Frontend)     │     │  Backend API    │     │  (Optional)     │
+│  Next.js App    │────▶│   ZK Passport   │────▶│ Recovery Module │
+│  (Safe App)     │     │   Verifier      │     │   (Sepolia)     │
 │                 │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         │                        │                        │
         ▼                        ▼                        ▼
-    QR Code              ZK Proof Verification    On-chain Attestation
-   Generation             & Validation            (Celo Blockchain)
+    QR Code              ZK Proof Verification    Safe Wallet Recovery
+   Generation             & Validation            (Guardian System)
 ```
 
 ## 🚀 Features
@@ -31,249 +32,248 @@ This workshop teaches developers how to:
 ### Core Features
 - **QR Code Authentication**: Dynamic QR code generation for seamless mobile verification
 - **Zero-Knowledge Proofs**: Privacy-preserving identity verification without exposing personal data
-- **Configurable Requirements**: Set custom age limits, excluded countries, and compliance checks
-- **Real-time Verification**: WebSocket-based updates for instant verification feedback
-- **Mock Passport Support**: Test environment support for development without real passports
+- **Safe Wallet Integration**: Built as a Safe App for seamless wallet integration
+- **Guardian Registration**: Register ZK identity as recovery guardian for Safe wallets
+- **Safe Recovery**: Recover Safe wallet access using ZK identity verification
+- **Module Management**: Enable/disable recovery modules on Safe wallets
 
 ### Technical Highlights
 - **Next.js 14** with App Router for modern React development
 - **TypeScript** for type-safe code
-- **Self Protocol SDK** (`@selfxyz/core` and `@selfxyz/qrcode`) integration
-- **Responsive Design** with Tailwind CSS
+- **ZK Passport SDK** (`@zkpassport/sdk`) integration
+- **Wagmi & Safe Protocol Kit** for Web3 interactions
+- **Sepolia Testnet** deployment and testing
+- **Responsive Design** with modern CSS
 - **Error Handling** with detailed validation feedback
-- **Environment-based Configuration** for easy deployment
 
 ## 📋 Prerequisites
 
 ### Required
-- **Node.js 20.x** or higher (specified in `package.json` engines)
-- **npm** or **yarn** package manager
-- **Self Mobile App** installed on your phone:
-  - [iOS App Store](https://apps.apple.com/us/app/self-zk/id6478563710)
-  - [Google Play Store](https://play.google.com/store/apps/details?id=com.proofofpassportapp)
+- **Node.js 20.x** or higher
+- **pnpm** package manager
+- **ZK Passport Mobile App** installed on your phone:
+  - [iOS App Store](https://apps.apple.com/app/zkpassport/id6467755244)
+  - [Google Play Store](https://play.google.com/store/apps/details?id=id.zkpassport.zkpassport)
 
 ### For Local Development
-- **ngrok** or similar tunneling service (for public endpoint exposure)
 - **Git** for version control
+- **Safe Wallet** for testing Safe App integration
 
-### For Smart Contract Deployment (Optional)
-- **Celo wallet** with test funds (for Alfajores testnet)
-- **Hardhat** or similar deployment tool
-- **Celoscan API key** for contract verification
+### For Smart Contract Deployment
+- **Ethereum wallet** with Sepolia ETH (for testnet deployment)
+- **Hardhat** for contract deployment and testing
+- **Etherscan API key** for contract verification on Sepolia
 
 ## 🛠️ Installation & Setup
 
 ### 1. Clone the Repository
 ```bash
 git clone <repository-url>
-cd self-workshop
+cd zk-passport
 ```
 
 ### 2. Install Dependencies
 ```bash
-npm install
-# or
-yarn install
+# Install app dependencies
+cd app
+pnpm install
+
+# Install contract dependencies
+cd ../contracts
+pnpm install
 ```
 
-### 3. Environment Configuration
-
-#### Create Environment File
-```bash
-cp .env.example .env.local
-```
-
-#### Configure Required Variables
-Edit `.env.local` with your settings:
-
-```env
-# REQUIRED: Public endpoint for verification callback (cannot be localhost)
-# For local dev, use ngrok: npx ngrok http 3000
-NEXT_PUBLIC_SELF_ENDPOINT=https://your-public-url.ngrok-free.app
-
-# Application Identity
-NEXT_PUBLIC_SELF_APP_NAME="Self Workshop"
-NEXT_PUBLIC_SELF_SCOPE="self-workshop"
-
-# Blockchain Configuration
-NEXT_PUBLIC_CELO_RPC_URL="https://forno.celo.org"
-
-# Development Settings
-NEXT_PUBLIC_SELF_ENABLE_MOCK_PASSPORT="true"  # Set to "false" for production
-```
-
-### 4. Set Up Public Endpoint (Local Development)
-
-Since Self Protocol requires a public endpoint for callbacks, use ngrok:
+### 3. Deploy Smart Contracts
 
 ```bash
-# Install ngrok globally (if not already installed)
-npm install -g ngrok
+cd contracts
+# Deploy the recovery module to Sepolia
+pnpm run deploy:sepolia
+```
 
-# Expose your local server
-npx ngrok http 3000
+### 4. Configure the Application
 
-# Copy the HTTPS URL (e.g., https://abc123.ngrok-free.app)
-# Update NEXT_PUBLIC_SELF_ENDPOINT in .env.local
+Update the contract addresses in `app/src/app/page.tsx`:
+```typescript
+const ZK_MODULE_ADDRESS = '0x...' // Your deployed contract address
 ```
 
 ### 5. Start the Development Server
 ```bash
-npm run dev
-# or
-yarn dev
+cd app
+pnpm run dev
 ```
 
 Visit `http://localhost:3000` to see the application.
 
+### 6. Test as Safe App
+
+To test the Safe App integration:
+1. Open [Safe Wallet](https://app.safe.global)
+2. Navigate to Apps section
+3. Add custom app with URL: `http://localhost:3000`
+4. The app will automatically connect to your Safe wallet
+
 ## 🔧 How It Works
 
-### 1. QR Code Generation
-When a user visits the homepage, the app:
-- Generates a unique session ID using UUID v4
-- Creates a Self Protocol verification request with specified requirements
-- Renders a QR code containing the verification link
+### 1. Safe App Integration
+When loaded as a Safe App:
+- Automatically connects to the user's Safe wallet
+- Displays Safe information (address, owners, modules)
+- Checks if the ZK Recovery Module is enabled
 
-### 2. Mobile Verification Flow
-Users scan the QR code with the Self app, which:
-- Reads passport data using NFC
-- Generates zero-knowledge proofs for requested attributes
-- Sends proofs to your verification endpoint
+### 2. Guardian Registration
+Safe owners can register as recovery guardians:
+- Generate QR code for ZK Passport verification
+- Scan with ZK Passport mobile app to prove identity
+- Submit transaction to register guardian on-chain
+- Guardian identity is stored as a hash for privacy
 
-### 3. Backend Verification
-The API endpoint (`/api/verify`) handles:
-- Proof validation using Self Protocol's verifier
-- Attribute checking (age, nationality, OFAC status)
-- Response formatting with detailed error messages
+### 3. Recovery Process
+When recovery is needed:
+- Generate recovery QR code
+- Verify identity with ZK Passport app
+- Specify old and new owner addresses
+- Submit recovery transaction to replace Safe owner
 
-### 4. Success State
-Upon successful verification:
-- Frontend receives success callback
-- User is redirected to `/verified` page
-- Optional: Smart contract records verification on-chain
+### 4. Module Management
+The app handles:
+- Enabling the ZK Recovery Module on Safe wallets
+- Checking module status and permissions
+- Managing guardian registrations and recoveries
 
 ## 📝 Configuration Options
 
-### Verification Requirements (in `src/app/page.tsx`)
+### Contract Addresses (in `app/src/app/page.tsx`)
 
 ```typescript
-const minimumAge = 30;                           // Minimum age requirement
-const excludedCountries = [countries.FRANCE];    // Excluded nationalities
-const requireName = true;                        // Request name disclosure
-const checkOFAC = true;                         // Enable OFAC compliance check
+const ZK_MODULE_ADDRESS = '0x...'    // Recovery module contract address
+const WITNESS_ADDRESS = '0x...'      // Witness address for recovery
 ```
 
-### Supported Verification Attributes
-- **Age Verification**: Prove age above threshold without revealing exact age
-- **Nationality**: Verify country of citizenship
-- **OFAC Compliance**: Check against sanctions lists
-- **Name Disclosure**: Optional name revelation
-- **Passport Validity**: Ensure non-expired passport
+### ZK Passport Configuration
+The app uses ZK Passport with the following settings:
+- **Network**: Ethereum Sepolia testnet
+- **Mode**: Compressed EVM proofs
+- **Verification**: Identity verification without revealing personal data
+- **Guardian System**: Hash-based identity storage for privacy
 
-## 🏃‍♂️ Workshop Exercises
+## 🏃‍♂️ Usage Guide
 
-### Exercise 1: Basic Integration
-1. Set up the development environment
-2. Configure environment variables
-3. Run the application and test with mock passport
+### Step 1: Deploy Recovery Module
+1. Deploy the RecoveryModule contract to Sepolia
+2. Update contract address in the app
+3. Verify contract on Etherscan
 
-### Exercise 2: Customize Requirements
-1. Modify age requirements
-2. Add/remove excluded countries
-3. Toggle OFAC checking
-4. Test different configurations
+### Step 2: Enable Module on Safe
+1. Open the app in Safe Wallet
+2. Connect to your Safe wallet
+3. Enable the ZK Recovery Module
+4. Confirm the transaction
 
+### Step 3: Register Guardian
+1. Click "Generate Verification Request"
+2. Scan QR code with ZK Passport app
+3. Complete identity verification
+4. Submit guardian registration transaction
 
-### Exercise 3: Smart Contract Integration
-1. Deploy the ProofOfHuman contract
-2. Connect frontend to contract
-3. Store verification attestations on-chain
-4. Query verification status from blockchain
+### Step 4: Test Recovery (Optional)
+1. Use a different device/wallet to test recovery
+2. Generate recovery QR code
+3. Verify identity with same ZK Passport
+4. Submit recovery transaction with new owner address
 
 ## 🚢 Deployment
 
 ### Vercel Deployment (Recommended)
 1. Push code to GitHub
 2. Connect repository to Vercel
-3. Set environment variables in Vercel dashboard
+3. Set build directory to `app/`
 4. Deploy
 
 ### Manual Deployment
 ```bash
 # Build the application
-npm run build
+cd app
+pnpm run build
 
 # Start production server
-npm start
+pnpm start
 ```
 
-### Environment Variables for Production
-- Set `NEXT_PUBLIC_SELF_ENABLE_MOCK_PASSPORT="false"`
-- Use production endpoints
-- Configure proper CORS and security headers
+### Production Considerations
+- Ensure contract addresses are correctly configured
+- Test Safe App integration on production domain
+- Configure proper CORS headers for Safe integration
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-#### "Verification failed" Error
-- Check that `NEXT_PUBLIC_SELF_ENDPOINT` is publicly accessible
-- Ensure environment variables are properly set
-- Verify the Self app is up to date
+#### Safe App Not Loading
+- Ensure the app is accessible via HTTPS in production
+- Check that manifest.json is properly configured
+- Verify CORS headers are set correctly
 
-#### QR Code Not Scanning
-- Ensure good lighting conditions
-- Try refreshing the page for a new QR code
-- Check that the Self app has camera permissions
+#### ZK Passport Verification Failed
+- Ensure you have the latest ZK Passport mobile app
+- Check that the QR code is clearly visible
+- Verify network connectivity on mobile device
 
-#### Mock Passport Not Working
-- Confirm `NEXT_PUBLIC_SELF_ENABLE_MOCK_PASSPORT="true"`
-- Restart the development server after changing env variables
-- Clear browser cache
+#### Transaction Failures
+- Ensure you have sufficient Sepolia ETH for gas
+- Check that the recovery module contract is deployed
+- Verify Safe wallet has the module enabled
 
-#### CORS Issues
-- Ensure your public endpoint supports CORS
-- Check ngrok configuration for local development
-- Add appropriate headers in production
+#### Module Not Enabled
+- Confirm you are a Safe owner
+- Check that the Safe is deployed on Sepolia
+- Ensure the module address is correct
 
 ## 📚 Project Structure
 
 ```
-self-workshop/
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── verify/
-│   │   │       └── route.ts      # Verification endpoint
-│   │   ├── verified/
-│   │   │   ├── page.tsx          # Success page
-│   │   │   └── page.module.css   # Success page styles
-│   │   ├── page.tsx              # Main QR code page
-│   │   ├── layout.tsx            # Root layout
-│   │   └── globals.css           # Global styles
-│   └── ...
-├── contracts/                     # Smart contract artifacts
-│   ├── artifacts/                # Compiled contracts
-│   └── .env                      # Contract deployment config
-├── public/                       # Static assets
-├── .env.example                  # Environment template
-├── package.json                  # Dependencies
+zk-passport/
+├── app/                          # Next.js application
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx          # Main Safe App interface
+│   │   │   ├── layout.tsx        # Root layout
+│   │   │   ├── providers.tsx     # Wagmi providers
+│   │   │   └── globals.css       # Global styles
+│   │   └── wagmi.ts              # Wagmi configuration
+│   ├── public/
+│   │   ├── manifest.json         # Safe App manifest
+│   │   └── logo.svg              # App icon
+│   ├── next.config.js            # Next.js configuration
+│   └── package.json              # App dependencies
+├── contracts/                    # Smart contracts
+│   ├── contracts/
+│   │   └── RecoveryModule.sol    # ZK recovery module
+│   ├── scripts/
+│   │   └── deploy-recovery.js    # Deployment script
+│   ├── test/                     # Contract tests
+│   ├── hardhat.config.js         # Hardhat configuration
+│   └── package.json              # Contract dependencies
 └── README.md                     # This file
 ```
 
 ## 🔗 Additional Resources
 
 ### Documentation
-- [Self Protocol Documentation](https://docs.self.xyz/)
-- [Self Protocol GitHub](https://github.com/proofofpassport)
+- [ZK Passport Documentation](https://docs.zkpassport.id/)
+- [ZK Passport GitHub](https://github.com/zkpassport)
+- [Safe Protocol Documentation](https://docs.safe.global/)
+- [Wagmi Documentation](https://wagmi.sh/)
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Celo Documentation](https://docs.celo.org/)
 
 ### Community & Support
-- [Workshop Issues](https://github.com/your-repo/issues)
+- [ZK Passport Discord](https://discord.gg/zkpassport)
+- [Safe Community](https://forum.safe.global/)
 
 ### Related Projects
-- [Proof of Passport](https://proofofpassport.com/)
+- [ZK Passport](https://zkpassport.id/)
+- [Safe Wallet](https://safe.global/)
 - [OpenPassport](https://openpassport.app/)
 
 ## 📄 License

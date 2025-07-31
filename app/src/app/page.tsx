@@ -523,7 +523,7 @@ function App() {
         data: encodeFunctionData({
           abi: ZK_MODULE_ABI,
           functionName: "register",
-          // @ts-ignore
+          // @ts-ignore-next-line
           args: [verifierParams, safeInfo!.address]
         }),
         operation: OperationType.Call
