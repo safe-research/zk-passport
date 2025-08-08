@@ -1,5 +1,8 @@
 # ZK Passport — Where Are We Now?
 
+> ⚠️ Disclaimer (Proof of Concept)
+> The code and contracts referenced in this article are unaudited and intended solely for research and demonstration. Do not use in production. Repository: [safe-research/zk-passport](https://github.com/safe-research/zk-passport)
+
 Zero-knowledge proofs have improved privacy by letting users prove facts about themselves without exposing raw data. ZK Passport technology applies this idea to the most widely trusted documents on earth: biometric passports and government IDs. The result is a reusable, privacy-preserving credential that can be verified on-chain or off-chain by decentralized applications.
 
 This article analyzes how ZK Passport systems operate today and the trade‑offs they entail. It also documents a hands‑on demonstration using ZK Passport (via the ZKPassport app) to show the flow end‑to‑end. References include the ZKPassport documentation and background on biometric passports and registry design [ZKPassport Intro](https://docs.zkpassport.id/intro), [ZK Passport docs](https://docs.rarimo.com/zk-passport/), and [Biometric passports 101](https://docs.rarimo.com/zk-passport/biometric-passports-101/).
@@ -26,6 +29,60 @@ The demonstration uses the ZKPassport app and SDK to gate Safe recovery in a dec
 The process begins with a one‑time setup on a smartphone: the ZKPassport app is installed, the passport is tapped to the NFC reader, and the MRZ fields are read. The app produces an initial zero‑knowledge proof and registers the document’s commitment in a shared registry. Thereafter, proof requests can be satisfied without rescanning the document [ZKPassport Intro](https://docs.zkpassport.id/intro).
 
 On the application side, the SDK generates a QR code (query URL). Scanning it in the ZKPassport app prompts the user to approve generation of a fresh proof of inclusion and the requested predicate (e.g., “proof of personhood” or “over 18”). The SDK exposes on‑chain verifier details for EVM networks (for example, a verifier contract on Ethereum Sepolia), which are used to verify proofs on‑chain. After verification, the recovery module’s `register` function is invoked to bind the proof to a Safe, and later the `recover` function rotates ownership to a new address upon successful verification. On modern phones, the round trip consistently completes in under a minute.
+
+## Smart‑Contract Integration: `RecoveryModule.sol` and Personhood Binding
+
+The recovery module implements a minimal binding between a Safe and the personhood identifier produced by ZKPassport. ZKPassport provides a domain‑ and scope‑scoped unique identifier that is stable for the same ID yet reveals no personal attributes [ZKPassport Personhood](https://docs.zkpassport.id/examples/personhood). The contract verifies a proof via the ZKPassport verifier and persists only this identifier.
+
+Key storage and flows are shown below.
+
+```20:31:contracts/contracts/RecoveryModule.sol
+/// @notice ZKPassport verifier contract
+IZKPassportVerifier public immutable zkPassportVerifier;
+
+/// @notice Maps Safe addresses to their registered recovery identifiers
+mapping(address => bytes32) public safeToRecoverer;
+```
+
+Registration verifies the proof and stores the identifier for the Safe:
+
+```63:82:contracts/contracts/RecoveryModule.sol
+function register(
+    ProofVerificationParams calldata params,
+    address safeAddress
+) external {
+    require(msg.sender == safeAddress, "Only Safe can register a guardian");
+    if (safeAddress == address(0)) revert ZeroAddress();
+    (bool verified, bytes32 uniqueIdentifier) = zkPassportVerifier.verifyProof(params);
+    if (!verified) revert InvalidProof();
+    safeToRecoverer[safeAddress] = uniqueIdentifier;
+    emit SafeRegistered(safeAddress, uniqueIdentifier);
+}
+```
+
+Recovery re‑verifies personhood and ensures the identifier matches the one stored during registration before performing an owner swap through the Safe:
+
+```102:118:contracts/contracts/RecoveryModule.sol
+(bool verified, bytes32 uniqueIdentifier) = zkPassportVerifier.verifyProof(params);
+if (!verified) revert InvalidProof();
+if (safeToRecoverer[safeAddress] != uniqueIdentifier) {
+    revert SafeNotRegistered();
+}
+bool success = Safe(payable(safeAddress)).execTransactionFromModule(
+    safeAddress,
+    0,
+    abi.encodeCall(IOwnerManager.swapOwner, (previousOwner, oldOwner, newOwner)),
+    Enum.Operation.Call
+);
+if (!success) revert OwnerSwapFailed();
+```
+
+### Privacy Rationale: Why Only the Unique Identifier is Stored
+
+- Minimal disclosure: persisting only a `bytes32` identifier avoids on‑chain storage of personally identifiable information (PII) such as name, birth date, nationality, or document numbers.
+- Scope and domain scoping: the identifier is scoped to an application domain and (optionally) a request scope, reducing cross‑site linkability by construction [ZKPassport Personhood](https://docs.zkpassport.id/examples/personhood).
+- Dictionary‑attack resistance: storing raw or hashed MRZ fields invites correlation and dictionary attacks; a scoped, opaque identifier plus a growing shared registry improves plausible deniability [ZK Passport docs](https://docs.rarimo.com/zk-passport/).
+- Principle of least privilege: recovery requires a stable binding between an account and a personhood token, not full identity attributes. Any additional attribute should be proven at query time via selective disclosure circuits rather than recorded on‑chain.
 
 ## Architecture Notes: DG1 Commitment and Selective Disclosure
 
@@ -77,6 +134,7 @@ In summary: ZK Passport can work, but it is not better than maintaining an EOA i
 
 ## References
 
+- Project repository — safe-research/zk-passport: [https://github.com/safe-research/zk-passport](https://github.com/safe-research/zk-passport)
 - ZKPassport documentation — Intro: [https://docs.zkpassport.id/intro](https://docs.zkpassport.id/intro)
 - Self Protocol documentation: [https://docs.self.xyz/](https://docs.self.xyz/)
 - Privado ID documentation: [https://docs.privado.id/](https://docs.privado.id/)

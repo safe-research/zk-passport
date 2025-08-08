@@ -85,17 +85,36 @@ pnpm install
 
 ### 3. Deploy Smart Contracts
 
+First, create `contracts/.env` with the required variables:
+
+```bash
+# contracts/.env
+PRIVATE_KEY=your_deployer_private_key
+SEPOLIA_URL=https://eth-sepolia.public.blastapi.io
+ETHERSCAN_API_KEY=your_etherscan_api_key
+ZK_PASSPORT_VERIFIER_ADDRESS=0x62e33cC35e29130e135341586e8Cf9C2BAbFB3eE # example
+```
+
+Then deploy to Sepolia:
+
 ```bash
 cd contracts
-# Deploy the recovery module to Sepolia
-pnpm run deploy:sepolia
+pnpm run deploy:recovery
 ```
+
+After deployment, the address will be written to `contracts/deployments/recovery-latest.json` and a timestamped file.
 
 ### 4. Configure the Application
 
-Update the contract addresses in `app/src/app/page.tsx`:
+Update the module address in both files:
+
+- `app/src/app/page.tsx`
+- `app/src/components/ZKPassportSection.tsx`
+
+Use the address from `contracts/deployments/recovery-latest.json`:
+
 ```typescript
-const ZK_MODULE_ADDRESS = '0x...' // Your deployed contract address
+const ZK_MODULE_ADDRESS = '0x...' // Deployed recovery module address
 ```
 
 ### 5. Start the Development Server
@@ -144,12 +163,15 @@ The app handles:
 
 ## 📝 Configuration Options
 
-### Contract Addresses (in `app/src/app/page.tsx`)
+### Contract Addresses
+
+Configure the recovery module address in `app/src/app/page.tsx` and `app/src/components/ZKPassportSection.tsx`.
 
 ```typescript
 const ZK_MODULE_ADDRESS = '0x...'    // Recovery module contract address
-const WITNESS_ADDRESS = '0x...'      // Witness address for recovery
 ```
+
+Note: The example UI also references a `WITNESS_ADDRESS` placeholder for the Safe owners linked-list parameter. Adjust as needed for your Safe.
 
 ### ZK Passport Configuration
 The app uses ZK Passport with the following settings:
@@ -157,6 +179,12 @@ The app uses ZK Passport with the following settings:
 - **Mode**: Compressed EVM proofs
 - **Verification**: Identity verification without revealing personal data
 - **Guardian System**: Hash-based identity storage for privacy
+
+### Current Sepolia Deployment (example)
+- Recovery Module: `0x2D2D70C1dC1DDEA79368F0D708fa5Ea125e59B31`
+- ZKPassport Verifier: `0x62e33cC35e29130e135341586e8Cf9C2BAbFB3eE`
+
+See `contracts/deployments/recovery-sepolia-*.json` for the latest values.
 
 ## 🏃‍♂️ Usage Guide
 
@@ -249,7 +277,12 @@ zk-passport/
 │   └── package.json              # App dependencies
 ├── contracts/                    # Smart contracts
 │   ├── contracts/
-│   │   └── RecoveryModule.sol    # ZK recovery module
+│   │   ├── contracts/
+│   │   │   ├── RecoveryModule.sol          # ZK recovery module (contract: ZKPassportSafeRecovery)
+│   │   │   └── RarimoRecoveryModule.sol    # Alternative implementation (Rarimo SDK)
+│   │   ├── interface/                      # Interfaces (IOwnerManager, IZKPassportVerifier)
+│   │   ├── deployments/                    # Deployment artifacts
+│   │   └── test/                           # Contract tests
 │   ├── scripts/
 │   │   └── deploy-recovery.js    # Deployment script
 │   ├── test/                     # Contract tests
