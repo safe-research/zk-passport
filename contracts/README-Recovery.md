@@ -22,13 +22,9 @@ PRIVATE_KEY=your_private_key_here
 ZK_PASSPORT_VERIFIER_ADDRESS=0x_your_zkpassport_verifier_address_here
 
 # Explorer API Keys for Verification
-CELOSCAN_API_KEY=your_celoscan_api_key_here
 ETHERSCAN_API_KEY=your_etherscan_api_key_here
-POLYGONSCAN_API_KEY=your_polygonscan_api_key_here
 
 # Optional: Custom Network URLs
-ALFAJORES_URL=https://alfajores-forno.celo-testnet.org
-CELO_MAINNET_URL=https://forno.celo.org
 SEPOLIA_URL=https://eth-sepolia.public.blastapi.io
 ```
 

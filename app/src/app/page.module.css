@@ -1,0 +1,435 @@
+/* Main Page Styles */
+
+/* Layout */
+.pageContainer {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  padding: 20px 0;
+}
+
+.mainContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.headerTitle {
+  font-size: 32px;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.headerDescription {
+  font-size: 18px;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Grid Layout */
+.gridLayout {
+  display: grid;
+  gap: 30px;
+  align-items: start;
+}
+
+.gridSingle {
+  grid-template-columns: 1fr;
+}
+
+.gridDouble {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Cards */
+.card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.cardLast {
+  margin-bottom: 0;
+}
+
+.cardTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+.cardTitleWithStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardDescription {
+  color: #64748b;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+/* Status Indicators */
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.statusDotGreen {
+  background-color: #10b981;
+}
+
+.statusDotRed {
+  background-color: #ef4444;
+}
+
+.statusDotAmber {
+  background-color: #f59e0b;
+}
+
+/* Connection Status */
+.connectionStatus {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.connectionStatusConnected {
+  background-color: #ecfdf5;
+  border: 1px solid #d1fae5;
+}
+
+.connectionStatusText {
+  margin: 0;
+  color: #065f46;
+  font-weight: 500;
+}
+
+.connectionStatusChain {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Network Warning */
+.networkWarning {
+  padding: 12px;
+  background-color: #fef2f2;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+  margin-bottom: 16px;
+}
+
+.networkWarningHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.networkWarningTitle {
+  margin: 0;
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.networkWarningText {
+  margin: 0 0 12px 0;
+  font-size: 12px;
+  color: #7f1d1d;
+}
+
+/* Buttons */
+.button {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.buttonPrimary {
+  background-color: #3b82f6;
+  color: white;
+  border: 1px solid #3b82f6;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.buttonSecondary {
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.buttonSecondary:hover:not(:disabled) {
+  background-color: #fef2f2;
+}
+
+.buttonDanger {
+  background-color: #dc2626;
+  color: white;
+  border: 1px solid #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  width: 100%;
+}
+
+.buttonDanger:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.buttonDisabled {
+  background-color: #9ca3af;
+  color: white;
+  cursor: not-allowed;
+  border: 1px solid #9ca3af;
+}
+
+.buttonLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Spinner */
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Forms */
+.inputGroup {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  font-family: monospace;
+}
+
+.input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.loadButton {
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Error Messages */
+.errorMessage {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+/* Safe Information */
+.safeDetails {
+  margin-bottom: 20px;
+}
+
+.safeDetailItem {
+  margin-bottom: 12px;
+}
+
+.safeDetailLabel {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.safeDetailValue {
+  margin: 4px 0 0 0;
+  font-family: monospace;
+  font-size: 14px;
+  color: #1e293b;
+  word-break: break-all;
+}
+
+/* Owner Status */
+.ownerStatus {
+  padding: 12px;
+  border-radius: 8px;
+  border-width: 2px;
+  border-style: solid;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ownerStatusOwner {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+
+.ownerStatusNotOwner {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.ownerStatusText {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ownerStatusTextOwner {
+  color: #065f46;
+}
+
+.ownerStatusTextNotOwner {
+  color: #991b1b;
+}
+
+/* Owners List */
+.ownersSection {
+  margin-bottom: 20px;
+}
+
+.ownersTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.ownersList {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.ownerItem {
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ownerItemDefault {
+  background-color: #f8fafc;
+}
+
+.ownerItemCurrent {
+  background-color: #f0f9ff;
+}
+
+.ownerIndex {
+  color: #64748b;
+}
+
+.ownerAddress {
+  flex: 1;
+  color: #1e293b;
+}
+
+.ownerYouBadge {
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 600;
+  font-family: system-ui;
+}
+
+/* Module Status */
+.moduleStatus {
+  padding: 12px;
+  border-radius: 8px;
+  border-width: 2px;
+  border-style: solid;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moduleStatusEnabled {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+
+.moduleStatusDisabled {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.moduleStatusText {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.moduleStatusTextEnabled {
+  color: #065f46;
+}
+
+.moduleStatusTextDisabled {
+  color: #991b1b;
+}
+
+/* Utility Classes */
+.textCenter {
+  text-align: center;
+}
+
+.mb0 {
+  margin-bottom: 0;
+}
+
+.mt4 {
+  margin-top: 4px;
+}
+
+.flexColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

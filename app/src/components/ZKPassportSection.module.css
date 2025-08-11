@@ -1,0 +1,341 @@
+/* ZK Passport Section Styles */
+
+/* Wrapper to ensure readable defaults */
+.zkpassportSection {
+  display: block;
+}
+
+.zkpassportContainer {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+.zkpassportTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.zkpassportDescription {
+  color: #64748b;
+  margin-bottom: 24px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.zkpassportCard {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.zkpassportCardTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.zkpassportCardDescription {
+  color: #64748b;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.zkpassportError {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  margin-bottom: 16px;
+  color: #991b1b;
+}
+
+.zkpassportButton {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+/* Keep colors readable even when the button element is disabled */
+.zkpassportButton:disabled {
+  opacity: 1;
+  filter: none;
+}
+
+.zkpassportButtonPrimary {
+  background-color: #10b981;
+  color: white;
+  border: 2px solid #10b981;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.zkpassportButtonPrimary:hover:not(:disabled) {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+.zkpassportButtonDisabled {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+  border: 2px solid #e2e8f0;
+  font-weight: 600;
+}
+
+.zkpassportButtonLoading {
+  background-color: #f59e0b;
+  color: white;
+  border: 2px solid #f59e0b;
+  cursor: not-allowed;
+  position: relative;
+  padding-left: 36px;
+  font-weight: 600;
+}
+
+.zkpassportButtonLoading::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.zkpassportButtonError {
+  background-color: #fef2f2;
+  color: #991b1b;
+  cursor: not-allowed;
+  border: 2px solid #ef4444;
+  font-weight: 600;
+}
+
+.zkpassportButtonError:disabled {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-color: #ef4444;
+}
+
+.zkpassportMessage {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.zkpassportMessageError {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.zkpassportMessageInfo {
+  background-color: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+.zkpassportStatus {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zkpassportStatusSuccess {
+  background-color: #ecfdf5;
+  border: 1px solid #d1fae5;
+  color: #065f46;
+}
+
+.zkpassportStatusPending {
+  background-color: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+.zkpassportStatusIndicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.zkpassportStatusSuccess .zkpassportStatusIndicator {
+  background-color: #10b981;
+}
+
+.zkpassportStatusPending .zkpassportStatusIndicator {
+  background-color: #3b82f6;
+  opacity: 0.7;
+}
+
+.zkpassportQrContainer {
+  padding: 16px;
+  background-color: white;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.zkpassportQrText {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.zkpassportIdentifier {
+  margin-bottom: 16px;
+}
+
+.zkpassportIdentifierLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.zkpassportIdentifierValue {
+  font-size: 12px;
+  font-family: monospace;
+  color: #64748b;
+  word-break: break-all;
+  background-color: white;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.zkpassportInputGroup {
+  margin-bottom: 16px;
+}
+
+.zkpassportInputLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.zkpassportInput {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  font-family: monospace;
+  background-color: white;
+  color: #000000;
+}
+
+.zkpassportInputInvalid {
+  border: 1px solid #ef4444;
+  background-color: #fef2f2;
+}
+
+.zkpassportInputError {
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 4px;
+  margin: 4px 0 0 0;
+}
+
+.zkpassportInfoCard {
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.zkpassportInfoContent {
+  padding: 16px;
+  background-color: #f0f9ff;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+  text-align: center;
+}
+
+.zkpassportInfoIcon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.zkpassportInfoTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 8px;
+  margin: 0 0 8px 0;
+}
+
+.zkpassportInfoDescription {
+  font-size: 14px;
+  color: #1e40af;
+  margin-bottom: 12px;
+  margin: 0 0 12px 0;
+}
+
+.zkpassportInfoNote {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.zkpassportRecoveryStatus {
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #10b981;
+  background-color: #ecfdf5;
+  margin-bottom: 20px;
+}
+
+.zkpassportRecoveryStatusHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zkpassportRecoveryStatusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+.zkpassportRecoveryStatusLabel {
+  font-weight: 600;
+  color: #065f46;
+  font-size: 14px;
+}
+
+.zkpassportRecoveryStatusId {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  font-family: monospace;
+  color: #059669;
+  word-break: break-all;
+}

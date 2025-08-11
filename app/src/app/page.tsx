@@ -1,10 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useAccount, useConnect, useDisconnect, useReadContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi'
-import Safe, {
-  Eip1193Provider
-} from '@safe-global/protocol-kit'
+import { useState, useEffect } from 'react'
+import { useAccount, useConnect, useDisconnect, useReadContract, useSwitchChain } from 'wagmi'
+import Safe, { Eip1193Provider } from '@safe-global/protocol-kit'
 import ZKPassportSection from '../components/ZKPassportSection'
 import {
   isConnectedAddressOwner,
@@ -13,209 +11,8 @@ import {
   getSepoliaChain,
   switchToSepolia
 } from '../utils/safeHelpers'
-
-const ZK_MODULE_ABI = [
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_verifierAddress",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "vkeyHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "proof",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes32[]",
-            "name": "publicInputs",
-            "type": "bytes32[]"
-          },
-          {
-            "internalType": "bytes",
-            "name": "committedInputs",
-            "type": "bytes"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "committedInputCounts",
-            "type": "uint256[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "validityPeriodInDays",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "domain",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "scope",
-            "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "devMode",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct ProofVerificationParams",
-        "name": "params",
-        "type": "tuple"
-      },
-      {
-        "internalType": "address",
-        "name": "safeAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "oldOwner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      }
-    ],
-    "name": "recover",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "vkeyHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "proof",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes32[]",
-            "name": "publicInputs",
-            "type": "bytes32[]"
-          },
-          {
-            "internalType": "bytes",
-            "name": "committedInputs",
-            "type": "bytes"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "committedInputCounts",
-            "type": "uint256[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "validityPeriodInDays",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "domain",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "scope",
-            "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "devMode",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct ProofVerificationParams",
-        "name": "params",
-        "type": "tuple"
-      },
-      {
-        "internalType": "address",
-        "name": "safeAddress",
-        "type": "address"
-      }
-    ],
-    "name": "register",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "safeToRecoverer",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "zkPassportVerifier",
-    "outputs": [
-      {
-        "internalType": "contract IZKPassportVerifier",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-] as const
-
-// verifier address: 0x62e33cC35e29130e135341586e8Cf9C2BAbFB3eE
-// module address: 0x75155d07f805eC2758eF6e2900B11F5988d17424
-
-const ZK_MODULE_ADDRESS = '0x2D2D70C1dC1DDEA79368F0D708fa5Ea125e59B31'
-const WITNESS_ADDRESS = '0x0000000000000000000000000000000000000001'
+import { ZK_MODULE_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
+import styles from './page.module.css'
 
 function App() {
   const account = useAccount()
@@ -226,8 +23,7 @@ function App() {
   const [ethereumAddress, setEthereumAddress] = useState('0x7af06A5E7226075DF00402A556f5529cf6D836CC')
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-
-
+  const [mounted, setMounted] = useState(false)
 
   const [safeInfo, setSafeInfo] = useState<{
     address: string
@@ -244,6 +40,10 @@ function App() {
     functionName: 'safeToRecoverer',
     args: [ethereumAddress as `0x${string}`],
   })
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleLoad = async () => {
     if (!ethereumAddress.trim()) {
@@ -305,461 +105,234 @@ function App() {
     }
   }
 
+  // Prevent hydration errors
+  if (!mounted) {
+    return null
+  }
+
   return (
-    <>
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: '#f8fafc',
-        padding: '20px 0'
-      }}>
-        {/* Main Container */}
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 20px'
-        }}>
-          {/* Header */}
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '40px'
-          }}>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: '#1e293b',
-              marginBottom: '8px'
-            }}>
-              Safe Recovery Module
-            </h1>
-            <p style={{
-              fontSize: '18px',
-              color: '#64748b',
-              maxWidth: '600px',
-              margin: '0 auto'
-            }}>
-              Secure Safe wallet recovery using ZKPassport identity verification
-            </p>
-          </div>
+    <div className={styles.pageContainer}>
+      <div className={styles.mainContainer}>
+        {/* Header */}
+        <div className={styles.header}>
+          <h1 className={styles.headerTitle}>Safe Recovery Module</h1>
+          <p className={styles.headerDescription}>
+            Secure Safe wallet recovery using ZKPassport identity verification
+          </p>
+        </div>
 
-          {/* Main Grid Layout */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: account.status === 'connected' && safeInfo ? '1fr 1fr' : '1fr',
-            gap: '30px',
-            alignItems: 'start'
-          }}>
-            {/* Left Column - Connection & Safe Loading */}
-            <div>
-              {/* Connection Card */}
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '24px',
-                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                marginBottom: '24px'
-              }}>
-                <h2 style={{
-                  fontSize: '20px',
-                  fontWeight: '600',
-                  color: '#1e293b',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    backgroundColor: account.status === 'connected' ? '#10b981' : '#ef4444'
-                  }}></div>
-                  Wallet Connection
-                </h2>
+        {/* Main Grid Layout */}
+        <div className={`${styles.gridLayout} ${account.status === 'connected' && safeInfo ? styles.gridDouble : styles.gridSingle}`}>
+          {/* Left Column - Connection & Safe Loading */}
+          <div>
+            {/* Connection Card */}
+            <div className={styles.card}>
+              <h2 className={`${styles.cardTitle} ${styles.cardTitleWithStatus}`}>
+                <div className={account.status === 'connected' ? styles.statusDotGreen : styles.statusDotRed}></div>
+                Wallet Connection
+              </h2>
 
-                {account.status === 'connected' ? (
-                  <div>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#ecfdf5',
-                      borderRadius: '8px',
-                      border: '1px solid #d1fae5',
-                      marginBottom: '16px'
-                    }}>
-                      <p style={{ margin: '0', color: '#065f46', fontWeight: '500' }}>
-                        ✅ Connected to {account.addresses?.[0]?.slice(0, 6)}...{account.addresses?.[0]?.slice(-4)}
-                      </p>
-                      <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-                        Chain ID: {account.chainId}
-                      </p>
-                    </div>
-
-                    {/* Chain Warning - Show when not connected to Sepolia */}
-                    {!isConnectedToSepolia(account) && (
-                      <div style={{
-                        padding: '12px',
-                        backgroundColor: '#fef2f2',
-                        borderRadius: '8px',
-                        border: '1px solid #fecaca',
-                        marginBottom: '16px'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <div style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            backgroundColor: '#ef4444'
-                          }}></div>
-                          <p style={{ margin: '0', color: '#991b1b', fontWeight: '600', fontSize: '14px' }}>
-                            ⚠️ Wrong Network
-                          </p>
-                        </div>
-                        <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#7f1d1d' }}>
-                          Please switch to Sepolia Testnet (Chain ID: 11155111) to use this application.
-                        </p>
-                        {getSepoliaChain(chains) && (
-                          <button
-                            type="button"
-                            onClick={() => switchToSepolia(chains, switchChain)}
-                            disabled={isSwitchingChain}
-                            style={{
-                              width: '100%',
-                              padding: '8px 12px',
-                              borderRadius: '6px',
-                              border: '1px solid #dc2626',
-                              backgroundColor: isSwitchingChain ? '#9ca3af' : '#dc2626',
-                              color: 'white',
-                              cursor: isSwitchingChain ? 'not-allowed' : 'pointer',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px'
-                            }}
-                          >
-                            {isSwitchingChain ? (
-                              <>
-                                <div style={{
-                                  width: '12px',
-                                  height: '12px',
-                                  border: '2px solid transparent',
-                                  borderTop: '2px solid white',
-                                  borderRadius: '50%',
-                                  animation: 'spin 1s linear infinite'
-                                }}></div>
-                                Switching...
-                              </>
-                            ) : (
-                              <>
-                                🔄 Switch to {getSepoliaChain(chains)?.name}
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => disconnect()}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: '6px',
-                        border: '1px solid #ef4444',
-                        backgroundColor: 'transparent',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <p style={{ color: '#64748b', marginBottom: '16px' }}>
-                      Connect your wallet to get started
+              {account.status === 'connected' ? (
+                <div>
+                  <div className={`${styles.connectionStatus} ${styles.connectionStatusConnected}`}>
+                    <p className={styles.connectionStatusText}>
+                      ✅ Connected to {account.addresses?.[0]?.slice(0, 6)}...{account.addresses?.[0]?.slice(-4)}
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {connectors.map((connector) => (
-                        <button
-                          key={connector.uid}
-                          onClick={() => connect({ connector })}
-                          type="button"
-                          style={{
-                            padding: '12px 16px',
-                            borderRadius: '8px',
-                            border: '1px solid #3b82f6',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            cursor: 'pointer',
-                            fontSize: '16px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          Connect {connector.name}
-                        </button>
-                      ))}
-                    </div>
-                    {status && (
-                      <p style={{ color: '#64748b', fontSize: '14px', marginTop: '8px' }}>{status}</p>
-                    )}
-                    {error?.message && (
-                      <p style={{ color: '#ef4444', fontSize: '14px', marginTop: '8px' }}>{error.message}</p>
-                    )}
+                    <p className={styles.connectionStatusChain}>
+                      Chain ID: {account.chainId}
+                    </p>
                   </div>
-                )}
-              </div>
 
-              {/* Safe Loading Card */}
-              {account.status === 'connected' && (
-                <div style={{
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  padding: '24px',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                }}>
-                  <h2 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    color: '#1e293b',
-                    marginBottom: '16px'
-                  }}>
-                    Load Safe Wallet
-                  </h2>
-                  <p style={{ color: '#64748b', marginBottom: '16px', fontSize: '14px' }}>
-                    Enter your Safe wallet address to manage recovery settings
-                  </p>
-
-                  {/* Network warning for Safe loading */}
+                  {/* Chain Warning - Show when not connected to Sepolia */}
                   {!isConnectedToSepolia(account) && (
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#fef2f2',
-                      borderRadius: '8px',
-                      border: '1px solid #fecaca',
-                      marginBottom: '16px'
-                    }}>
-                      <p style={{ margin: '0', fontSize: '12px', color: '#991b1b' }}>
-                        ⚠️ Safe loading is disabled. Please switch to Sepolia Testnet to continue.
+                    <div className={styles.networkWarning}>
+                      <div className={styles.networkWarningHeader}>
+                        <div className={styles.statusDotRed}></div>
+                        <p className={styles.networkWarningTitle}>⚠️ Wrong Network</p>
+                      </div>
+                      <p className={styles.networkWarningText}>
+                        Please switch to Sepolia Testnet (Chain ID: 11155111) to use this application.
                       </p>
+                      {getSepoliaChain(chains) && (
+                        <button
+                          type="button"
+                          onClick={() => switchToSepolia(chains, switchChain)}
+                          disabled={isSwitchingChain}
+                          className={`${styles.button} ${styles.buttonDanger} ${isSwitchingChain ? styles.buttonDisabled : ''}`}
+                        >
+                          {isSwitchingChain ? (
+                            <span className={styles.buttonLoading}>
+                              <div className={styles.spinner}></div>
+                              Switching...
+                            </span>
+                          ) : (
+                            <>🔄 Switch to {getSepoliaChain(chains)?.name}</>
+                          )}
+                        </button>
+                      )}
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                    <input
-                      type="text"
-                      value={ethereumAddress}
-                      onChange={(e) => setEthereumAddress(e.target.value)}
-                      placeholder="Enter Safe address (0x...)"
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        borderRadius: '8px',
-                        border: '1px solid #d1d5db',
-                        fontSize: '14px',
-                        fontFamily: 'monospace'
-                      }}
-                      disabled={loading || !isConnectedToSepolia(account)}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleLoad}
-                      disabled={loading || !isConnectedToSepolia(account)}
-                      style={{
-                        padding: '12px 20px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        backgroundColor: loading || !isConnectedToSepolia(account) ? '#9ca3af' : '#3b82f6',
-                        color: 'white',
-                        cursor: loading || !isConnectedToSepolia(account) ? 'not-allowed' : 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {!isConnectedToSepolia(account) ? 'Wrong Network' : loading ? 'Loading...' : 'Load Safe'}
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => disconnect()}
+                    className={`${styles.button} ${styles.buttonSecondary}`}
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <p className={styles.cardDescription}>
+                    Connect your wallet to get started
+                  </p>
+                  <div className={styles.flexColumn}>
+                    {connectors.map((connector) => (
+                      <button
+                        key={connector.uid}
+                        onClick={() => connect({ connector })}
+                        type="button"
+                        className={`${styles.button} ${styles.buttonPrimary}`}
+                      >
+                        Connect {connector.name}
+                      </button>
+                    ))}
                   </div>
-
-                  {loadError && (
-                    <div style={{
-                      marginTop: '12px',
-                      padding: '12px',
-                      backgroundColor: '#fef2f2',
-                      border: '1px solid #fecaca',
-                      borderRadius: '8px',
-                      color: '#991b1b',
-                      fontSize: '14px'
-                    }}>
-                      <strong>Error:</strong> {loadError}
-                    </div>
+                  {status && (
+                    <p className={`${styles.cardDescription} ${styles.mt4}`}>{status}</p>
+                  )}
+                  {error?.message && (
+                    <p className={`${styles.errorMessage} ${styles.mt4}`}>{error.message}</p>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Right Column - Safe Information & Actions */}
-            {account.status === 'connected' && safeInfo && (
-              <div>
-                {/* Safe Information Card */}
-                <div style={{
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  padding: '24px',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                  marginBottom: '24px'
-                }}>
-                  <h2 style={{
-                    fontSize: '20px',
-                    fontWeight: '600',
-                    color: '#1e293b',
-                    marginBottom: '20px'
-                  }}>
-                    Safe Information
-                  </h2>
+            {/* Safe Loading Card */}
+            {account.status === 'connected' && (
+              <div className={`${styles.card} ${styles.cardLast}`}>
+                <h2 className={styles.cardTitle}>Load Safe Wallet</h2>
+                <p className={styles.cardDescription}>
+                  Enter your Safe wallet address to manage recovery settings
+                </p>
 
-                  {/* Safe Details */}
-                  <div style={{ marginBottom: '20px' }}>
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>Address:</span>
-                      <p style={{
-                        margin: '4px 0 0 0',
-                        fontFamily: 'monospace',
-                        fontSize: '14px',
-                        color: '#1e293b',
-                        wordBreak: 'break-all'
-                      }}>
-                        {safeInfo.address}
-                      </p>
-                    </div>
-                    <div style={{ marginBottom: '12px' }}>
-                      <span style={{ fontSize: '14px', color: '#64748b', fontWeight: '500' }}>Status:</span>
-                      <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#1e293b' }}>
-                        {safeInfo.isDeployed ? '✅ Deployed' : '❌ Not Deployed'} •
-                        Threshold: {safeInfo.threshold}/{safeInfo.owners.length}
-                      </p>
-                    </div>
+                {/* Network warning for Safe loading */}
+                {!isConnectedToSepolia(account) && (
+                  <div className={styles.networkWarning}>
+                    <p className={styles.networkWarningText}>
+                      ⚠️ Safe loading is disabled. Please switch to Sepolia Testnet to continue.
+                    </p>
                   </div>
+                )}
 
-                  {/* Wallet Status */}
-                  <div style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: `2px solid ${isConnectedAddressOwner(account, safeInfo) ? '#10b981' : '#ef4444'}`,
-                    backgroundColor: isConnectedAddressOwner(account, safeInfo) ? '#ecfdf5' : '#fef2f2',
-                    marginBottom: '20px'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: isConnectedAddressOwner(account, safeInfo) ? '#10b981' : '#ef4444'
-                      }}></div>
-                      <span style={{
-                        fontWeight: '600',
-                        color: isConnectedAddressOwner(account, safeInfo) ? '#065f46' : '#991b1b',
-                        fontSize: '14px'
-                      }}>
-                        {isConnectedAddressOwner(account, safeInfo) ? 'SAFE OWNER' : 'NOT OWNER'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Owners List */}
-                  <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}>
-                      Owners ({safeInfo.owners.length})
-                    </h3>
-                    <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                      {safeInfo.owners.map((owner, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            padding: '8px',
-                            backgroundColor: account.address && owner.toLowerCase() === account.address.toLowerCase() ? '#f0f9ff' : '#f8fafc',
-                            borderRadius: '6px',
-                            marginBottom: '4px',
-                            fontSize: '13px',
-                            fontFamily: 'monospace',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                          }}
-                        >
-                          <span style={{ color: '#64748b' }}>{index + 1}.</span>
-                          <span style={{ flex: 1, color: '#1e293b' }}>{owner}</span>
-                          {account.address && owner.toLowerCase() === account.address.toLowerCase() && (
-                            <span style={{
-                              fontSize: '12px',
-                              color: '#10b981',
-                              fontWeight: '600',
-                              fontFamily: 'system-ui'
-                            }}>
-                              YOU
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* ZK Module Status */}
-                  <div style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: `2px solid ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? '#10b981' : '#ef4444'}`,
-                    backgroundColor: safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? '#ecfdf5' : '#fef2f2',
-                    marginBottom: '16px'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? '#10b981' : '#ef4444'
-                      }}></div>
-                      <span style={{
-                        fontWeight: '600',
-                        color: safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? '#065f46' : '#991b1b',
-                        fontSize: '14px'
-                      }}>
-                        ZK Recovery Module: {safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? 'ENABLED' : 'DISABLED'}
-                      </span>
-                    </div>
-                  </div>
-
-
+                <div className={styles.inputGroup}>
+                  <input
+                    type="text"
+                    value={ethereumAddress}
+                    onChange={(e) => setEthereumAddress(e.target.value)}
+                    placeholder="Enter Safe address (0x...)"
+                    className={styles.input}
+                    disabled={loading || !isConnectedToSepolia(account)}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleLoad}
+                    disabled={loading || !isConnectedToSepolia(account)}
+                    className={`${styles.loadButton} ${loading || !isConnectedToSepolia(account) ? styles.buttonDisabled : styles.buttonPrimary}`}
+                  >
+                    {!isConnectedToSepolia(account) ? 'Wrong Network' : loading ? 'Loading...' : 'Load Safe'}
+                  </button>
                 </div>
 
-                {/* ZK-Passport Section */}
-                <ZKPassportSection
-                  account={account}
-                  safeInfo={safeInfo}
-                  ethereumAddress={ethereumAddress}
-                  recovererUniqueId={recovererUniqueId}
-                  readError={readError}
-                  readLoading={readLoading}
-                  isConnectedAddressOwner={() => isConnectedAddressOwner(account, safeInfo)}
-                  isSafeRegisteredForRecovery={() => isSafeRegisteredForRecovery(recovererUniqueId, readError, readLoading)}
-                  isConnectedToSepolia={() => isConnectedToSepolia(account)}
-                  handleLoad={handleLoad}
-                />
+                {loadError && (
+                  <div className={styles.errorMessage}>
+                    <strong>Error:</strong> {loadError}
+                  </div>
+                )}
               </div>
             )}
           </div>
+
+          {/* Right Column - Safe Information & Actions */}
+          {account.status === 'connected' && safeInfo && (
+            <div>
+              {/* Safe Information Card */}
+              <div className={styles.card}>
+                <h2 className={styles.cardTitle}>Safe Information</h2>
+
+                {/* Safe Details */}
+                <div className={styles.safeDetails}>
+                  <div className={styles.safeDetailItem}>
+                    <span className={styles.safeDetailLabel}>Address:</span>
+                    <p className={styles.safeDetailValue}>{safeInfo.address}</p>
+                  </div>
+                  <div className={styles.safeDetailItem}>
+                    <span className={styles.safeDetailLabel}>Status:</span>
+                    <p className={styles.safeDetailValue}>
+                      {safeInfo.isDeployed ? '✅ Deployed' : '❌ Not Deployed'} •
+                      Threshold: {safeInfo.threshold}/{safeInfo.owners.length}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Wallet Status */}
+                <div className={`${styles.ownerStatus} ${isConnectedAddressOwner(account, safeInfo) ? styles.ownerStatusOwner : styles.ownerStatusNotOwner}`}>
+                  <div className={isConnectedAddressOwner(account, safeInfo) ? styles.statusDotGreen : styles.statusDotRed}></div>
+                  <span className={`${styles.ownerStatusText} ${isConnectedAddressOwner(account, safeInfo) ? styles.ownerStatusTextOwner : styles.ownerStatusTextNotOwner}`}>
+                    {isConnectedAddressOwner(account, safeInfo) ? 'SAFE OWNER' : 'NOT OWNER'}
+                  </span>
+                </div>
+
+                {/* Owners List */}
+                <div className={styles.ownersSection}>
+                  <h3 className={styles.ownersTitle}>Owners ({safeInfo.owners.length})</h3>
+                  <div className={styles.ownersList}>
+                    {safeInfo.owners.map((owner, index) => (
+                      <div
+                        key={index}
+                        className={`${styles.ownerItem} ${
+                          account.address && owner.toLowerCase() === account.address.toLowerCase() 
+                            ? styles.ownerItemCurrent 
+                            : styles.ownerItemDefault
+                        }`}
+                      >
+                        <span className={styles.ownerIndex}>{index + 1}.</span>
+                        <span className={styles.ownerAddress}>{owner}</span>
+                        {account.address && owner.toLowerCase() === account.address.toLowerCase() && (
+                          <span className={styles.ownerYouBadge}>YOU</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ZK Module Status */}
+                <div className={`${styles.moduleStatus} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.moduleStatusEnabled : styles.moduleStatusDisabled}`}>
+                  <div className={safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.statusDotGreen : styles.statusDotRed}></div>
+                  <span className={`${styles.moduleStatusText} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.moduleStatusTextEnabled : styles.moduleStatusTextDisabled}`}>
+                    ZK Recovery Module: {safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? 'ENABLED' : 'DISABLED'}
+                  </span>
+                </div>
+              </div>
+
+              {/* ZK-Passport Section */}
+              <ZKPassportSection
+                account={account}
+                safeInfo={safeInfo}
+                ethereumAddress={ethereumAddress}
+                recovererUniqueId={recovererUniqueId}
+                readError={readError}
+                readLoading={readLoading}
+                isConnectedAddressOwner={() => isConnectedAddressOwner(account, safeInfo)}
+                isSafeRegisteredForRecovery={() => isSafeRegisteredForRecovery(recovererUniqueId, readError, readLoading)}
+                isConnectedToSepolia={() => isConnectedToSepolia(account)}
+                handleLoad={handleLoad}
+              />
+            </div>
+          )}
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

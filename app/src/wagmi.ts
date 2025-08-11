@@ -1,18 +1,12 @@
 import { http, cookieStorage, createConfig, createStorage } from 'wagmi'
-import { mainnet, sepolia } from 'wagmi/chains'
-import { injected, safe } from 'wagmi/connectors'
+import { sepolia } from 'wagmi/chains'
+import { injected } from 'wagmi/connectors'
 
 export function getConfig() {
   return createConfig({
     chains: [sepolia],
     connectors: [
       injected(),
-      safe({
-        allowedDomains: [
-          /^app\.safe\.global$/,
-        ],
-        debug: true, // Enable debug mode for development
-      })
     ],
     storage: createStorage({
       storage: cookieStorage,

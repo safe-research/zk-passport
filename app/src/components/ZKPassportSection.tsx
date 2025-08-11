@@ -8,206 +8,10 @@ import QRCode from "react-qr-code"
 import { MetaTransactionData, OperationType } from '@safe-global/types-kit'
 import { encodeFunctionData } from 'viem'
 import { isValidEthereumAddress } from '../utils/safeHelpers'
+import styles from './ZKPassportSection.module.css'
+import { ZK_MODULE_ADDRESS, WITNESS_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
 
-const ZK_MODULE_ABI = [
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_verifierAddress",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "vkeyHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "proof",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes32[]",
-            "name": "publicInputs",
-            "type": "bytes32[]"
-          },
-          {
-            "internalType": "bytes",
-            "name": "committedInputs",
-            "type": "bytes"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "committedInputCounts",
-            "type": "uint256[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "validityPeriodInDays",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "domain",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "scope",
-            "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "devMode",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct ProofVerificationParams",
-        "name": "params",
-        "type": "tuple"
-      },
-      {
-        "internalType": "address",
-        "name": "safeAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "oldOwner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      }
-    ],
-    "name": "recover",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "vkeyHash",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "proof",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes32[]",
-            "name": "publicInputs",
-            "type": "bytes32[]"
-          },
-          {
-            "internalType": "bytes",
-            "name": "committedInputs",
-            "type": "bytes"
-          },
-          {
-            "internalType": "uint256[]",
-            "name": "committedInputCounts",
-            "type": "uint256[]"
-          },
-          {
-            "internalType": "uint256",
-            "name": "validityPeriodInDays",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "domain",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "scope",
-            "type": "string"
-          },
-          {
-            "internalType": "bool",
-            "name": "devMode",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct ProofVerificationParams",
-        "name": "params",
-        "type": "tuple"
-      },
-      {
-        "internalType": "address",
-        "name": "safeAddress",
-        "type": "address"
-      }
-    ],
-    "name": "register",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "safeToRecoverer",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "zkPassportVerifier",
-    "outputs": [
-      {
-        "internalType": "contract IZKPassportVerifier",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-] as const
 
-const ZK_MODULE_ADDRESS = '0x2D2D70C1dC1DDEA79368F0D708fa5Ea125e59B31'
-const WITNESS_ADDRESS = '0x0000000000000000000000000000000000000001'
 
 interface ZKPassportSectionProps {
   account: any
@@ -458,7 +262,7 @@ function ZKPassportSection({
     }
   }
 
-  const createRequest = async () => {
+  const handleCreateGuardian = async () => {
     if (!zkPassportRef.current) {
       return
     }
@@ -502,8 +306,7 @@ function ZKPassportSection({
       onReject,
       onError,
     } = queryBuilder
-    // .disclose('birthdate')
-    // .eq('birthdate', new D ate('1990-01-01'))
+    .bind('user_address', safeInfo!.address)
       .done()
 
     setQueryUrl(url)
@@ -554,8 +357,6 @@ function ZKPassportSection({
       // Get verification parameters
       const verifierParams = zkPassportRef.current!.getSolidityVerifierParameters({
         proof: proof!,
-        // Use the same scope as the one you specified with the request function
-        // Enable dev mode if you want to use mock passports, otherwise keep it false
         devMode: false,
       })
 
@@ -566,7 +367,7 @@ function ZKPassportSection({
           abi: ZK_MODULE_ABI,
           functionName: "register",
           // @ts-ignore-next-line
-          args: [verifierParams, safeInfo!.address]
+          args: [verifierParams]
         }),
         operation: OperationType.Call
       }
@@ -642,7 +443,7 @@ function ZKPassportSection({
       onReject,
       onError,
     } = queryBuilder
-      // Same settings as createRequest - can add specific disclosures here if needed
+      .bind('user_address', newOwnerAddress)
       .done()
 
     setRecoveryQueryUrl(url)
@@ -714,10 +515,9 @@ function ZKPassportSection({
           // @ts-ignore - Type compatibility between ZKPassport SDK and wagmi
           args: [
             wagmiVerifierParams,
-            ethereumAddress as `0x${string}`, // safeAddress
-            oldOwnerAddress as `0x${string}`, // oldOwner (from input)
-            newOwnerAddress as `0x${string}`, // newOwner (from input)
-            WITNESS_ADDRESS as `0x${string}`, // previousOwner (needs Safe owner list knowledge)
+            ethereumAddress as `0x${string}`, 
+            oldOwnerAddress as `0x${string}`, 
+            WITNESS_ADDRESS as `0x${string}`, 
           ],
         })
 
@@ -749,66 +549,62 @@ function ZKPassportSection({
     })
   }
 
+  // Prevent hydration errors by ensuring consistent rendering
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Debug hydration issues
+  if (typeof window !== 'undefined' && !mounted) {
+    console.log('ZKPassportSection: Client-side, not yet mounted')
+  }
+
   if (!safeInfo) {
+    console.log('ZKPassportSection: No safeInfo available')
     return null
   }
 
+  if (!mounted) {
+    console.log('ZKPassportSection: Not mounted yet, returning placeholder for SSR')
+    // Return a placeholder with the same structure to prevent hydration mismatch
+    return (
+      <section className={styles.zkpassportSection}>
+        <div className={styles.zkpassportContainer}>
+          <h2 className={styles.zkpassportTitle}>
+            ZK-Passport
+          </h2>
+          <p className={styles.zkpassportDescription}>
+            Loading...
+          </p>
+        </div>
+      </section>
+    )
+  }
+
   return (
-    <section>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: '24px'
-      }}>
-        <h2 style={{
-          fontSize: '24px',
-          fontWeight: '600',
-          color: '#1e293b',
-          marginBottom: '16px',
-          textAlign: 'center'
-        }}>
+    <section className={styles.zkpassportSection} suppressHydrationWarning>
+      <div className={styles.zkpassportContainer} suppressHydrationWarning>
+        <h2 className={styles.zkpassportTitle}>
           ZK-Passport
         </h2>
-        <p style={{ 
-          color: '#64748b', 
-          marginBottom: '24px', 
-          fontSize: '14px',
-          textAlign: 'center'
-        }}>
+        <p className={styles.zkpassportDescription}>
           Secure identity verification and recovery using Zero-Knowledge proofs
         </p>
 
         {/* Enable Module Card - Only show if ZK module is NOT enabled */}
-        {!safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
-          <div style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#1e293b',
-              marginBottom: '8px'
-            }}>
+        {mounted && !safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
+          <div className={styles.zkpassportCard}>
+            <h3 className={styles.zkpassportCardTitle}>
               Enable ZK Recovery Module
             </h3>
-            <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
+            <p className={styles.zkpassportCardDescription}>
               Enable the ZK Recovery Module on your Safe to use ZK-Passport features
             </p>
             
             {!isConnectedAddressOwner() && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                marginBottom: '16px',
-                color: '#991b1b'
-              }}>
+              <div className={styles.zkpassportError}>
                 <strong>⚠️ Access Denied:</strong> Only Safe owners can enable modules.
                 <br />
                 <small>Connect with an owner wallet address to continue.</small>
@@ -816,14 +612,7 @@ function ZKPassportSection({
             )}
 
             {!isConnectedToSepolia() && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                marginBottom: '16px',
-                color: '#991b1b'
-              }}>
+              <div className={styles.zkpassportError}>
                 <strong>⚠️ Wrong Network:</strong> Module enablement requires Sepolia Testnet.
                 <br />
                 <small>Please switch to Sepolia (Chain ID: 11155111) to continue.</small>
@@ -834,18 +623,13 @@ function ZKPassportSection({
               type="button"
               onClick={handleEnableModule}
               disabled={enableModuleLoading || isEnableModuleTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia()}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: enableModuleLoading || isEnableModuleTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia() ? '#9ca3af' : '#3b82f6',
-                color: 'white',
-                cursor: enableModuleLoading || isEnableModuleTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia() ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                marginBottom: '16px'
-              }}
+              className={`${styles.zkpassportButton} ${
+                enableModuleLoading || isEnableModuleTxConfirming 
+                  ? styles.zkpassportButtonLoading
+                  : !isConnectedToSepolia() || !isConnectedAddressOwner()
+                  ? styles.zkpassportButtonError 
+                  : styles.zkpassportButtonPrimary
+              }`}
             >
               {!isConnectedToSepolia() ? 'Wrong Network' :
                isEnableModuleTxConfirming ? 'Confirming Transaction...' :
@@ -854,40 +638,15 @@ function ZKPassportSection({
             </button>
 
             {enableModuleMessage && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: enableModuleMessage.includes('Error') ? '#fef2f2' : '#f0f9ff',
-                border: `1px solid ${enableModuleMessage.includes('Error') ? '#fecaca' : '#bfdbfe'}`,
-                color: enableModuleMessage.includes('Error') ? '#991b1b' : '#1e40af',
-                fontSize: '14px',
-                marginBottom: '16px'
-              }}>
+              <div className={`${styles.zkpassportMessage} ${enableModuleMessage.includes('Error') ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
                 {enableModuleMessage}
               </div>
             )}
 
             {/* Enable Module Transaction Status Indicator */}
             {(enableModuleTxHash && (isEnableModuleTxConfirming || isEnableModuleTxConfirmed)) && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: isEnableModuleTxConfirmed ? '#ecfdf5' : '#f0f9ff',
-                border: `1px solid ${isEnableModuleTxConfirmed ? '#d1fae5' : '#bfdbfe'}`,
-                color: isEnableModuleTxConfirmed ? '#065f46' : '#1e40af',
-                fontSize: '14px',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: isEnableModuleTxConfirmed ? '#10b981' : '#3b82f6',
-                  opacity: !isEnableModuleTxConfirmed ? 0.7 : 1
-                }}></div>
+              <div className={`${styles.zkpassportStatus} ${isEnableModuleTxConfirmed ? styles.zkpassportStatusSuccess : styles.zkpassportStatusPending}`}>
+                <div className={styles.zkpassportStatusIndicator}></div>
                 <span>
                   {isEnableModuleTxConfirming && '🔄 Confirming module activation on network...'}
                   {isEnableModuleTxConfirmed && '✅ Module activation confirmed! Safe info will refresh shortly.'}
@@ -898,34 +657,13 @@ function ZKPassportSection({
         )}
 
         {/* Guardian Registration Card - Only show if ZK module is enabled */}
-        {safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
-          <div style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#1e293b',
-              marginBottom: '8px'
-            }}>
-              Register Guardian
-            </h3>
-            <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
-              Verify your identity to register as a recovery guardian for this Safe
-            </p>
+        {mounted && safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
+          <div className={styles.zkpassportCard}>
+            <h3 className={styles.zkpassportCardTitle}>Register Guardian</h3>
+            <p className={styles.zkpassportCardDescription}>Verify your identity to register as a recovery guardian for this Safe</p>
             
             {!isConnectedAddressOwner() && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                marginBottom: '16px',
-                color: '#991b1b'
-              }}>
+              <div className={styles.zkpassportError}>
                 <strong>⚠️ Access Denied:</strong> Only Safe owners can register guardians.
                 <br />
                 <small>Connect with an owner wallet address to continue.</small>
@@ -933,14 +671,7 @@ function ZKPassportSection({
             )}
 
             {!isConnectedToSepolia() && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                marginBottom: '16px',
-                color: '#991b1b'
-              }}>
+              <div className={styles.zkpassportError}>
                 <strong>⚠️ Wrong Network:</strong> ZK-Passport requires Sepolia Testnet.
                 <br />
                 <small>Please switch to Sepolia (Chain ID: 11155111) to continue.</small>
@@ -949,20 +680,15 @@ function ZKPassportSection({
             
             <button
               type="button"
-              onClick={createRequest}
+              onClick={handleCreateGuardian}
               disabled={requestInProgress || isGuardianTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia()}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: requestInProgress || isGuardianTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia() ? '#9ca3af' : '#10b981',
-                color: 'white',
-                cursor: requestInProgress || isGuardianTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia() ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                marginBottom: '16px'
-              }}
+              className={`${styles.zkpassportButton} ${
+                requestInProgress || isGuardianTxConfirming
+                  ? styles.zkpassportButtonLoading
+                  : (!isConnectedAddressOwner() || !isConnectedToSepolia())
+                  ? styles.zkpassportButtonError
+                  : styles.zkpassportButtonPrimary
+              }`}
             >
               {!isConnectedToSepolia() ? 'Wrong Network' :
                isGuardianTxConfirming ? 'Confirming Transaction...' :
@@ -972,55 +698,22 @@ function ZKPassportSection({
             </button>
 
             {queryUrl && (
-              <div style={{
-                padding: '16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                textAlign: 'center',
-                marginBottom: '16px'
-              }}>
-                <p style={{ marginBottom: '12px', fontSize: '14px', color: '#64748b' }}>
-                  Scan with ZKPassport app:
-                </p>
+              <div className={styles.zkpassportQrContainer}>
+                <p className={styles.zkpassportQrText}>Scan with ZKPassport app:</p>
                 <QRCode value={queryUrl} size={200} />
               </div>
             )}
 
             {message && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: message.includes('Error') ? '#fef2f2' : '#f0f9ff',
-                border: `1px solid ${message.includes('Error') ? '#fecaca' : '#bfdbfe'}`,
-                color: message.includes('Error') ? '#991b1b' : '#1e40af',
-                fontSize: '14px',
-                marginBottom: '16px'
-              }}>
+              <div className={`${styles.zkpassportMessage} ${message.includes('Error') ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
                 {message}
               </div>
             )}
 
             {/* Guardian Transaction Status Indicator */}
             {(guardianTxHash && (isGuardianTxConfirming || isGuardianTxConfirmed)) && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: isGuardianTxConfirmed ? '#ecfdf5' : '#f0f9ff',
-                border: `1px solid ${isGuardianTxConfirmed ? '#d1fae5' : '#bfdbfe'}`,
-                color: isGuardianTxConfirmed ? '#065f46' : '#1e40af',
-                fontSize: '14px',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: isGuardianTxConfirmed ? '#10b981' : '#3b82f6',
-                  opacity: !isGuardianTxConfirmed ? 0.7 : 1
-                }}></div>
+              <div className={`${styles.zkpassportStatus} ${isGuardianTxConfirmed ? styles.zkpassportStatusSuccess : styles.zkpassportStatusPending}`}>
+                <div className={styles.zkpassportStatusIndicator}></div>
                 <span>
                   {isGuardianTxConfirming && '🔄 Confirming guardian registration on network...'}
                   {isGuardianTxConfirmed && '✅ Guardian registration confirmed! Safe info will refresh shortly.'}
@@ -1029,160 +722,64 @@ function ZKPassportSection({
             )}
 
             {uniqueIdentifier && (
-              <div style={{ marginBottom: '16px' }}>
-                <p style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>
-                  Unique Identifier:
-                </p>
-                <p style={{ 
-                  fontSize: '12px', 
-                  fontFamily: 'monospace', 
-                  color: '#64748b',
-                  wordBreak: 'break-all',
-                  backgroundColor: 'white',
-                  padding: '8px',
-                  borderRadius: '4px'
-                }}>
-                  {uniqueIdentifier}
-                </p>
+              <div className={styles.zkpassportIdentifier}>
+                <p className={styles.zkpassportIdentifierLabel}>Unique Identifier:</p>
+                <p className={styles.zkpassportIdentifierValue}>{uniqueIdentifier}</p>
               </div>
             )}
 
             {verified !== undefined && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: verified ? '#ecfdf5' : '#fef2f2',
-                border: `1px solid ${verified ? '#d1fae5' : '#fecaca'}`,
-                color: verified ? '#065f46' : '#991b1b',
-                fontSize: '14px'
-              }}>
-                <strong>Verification Status:</strong> {verified ? "✅ Verified" : "❌ Failed"}
+              <div className={`${styles.zkpassportMessage} ${verified ? styles.zkpassportStatusSuccess : styles.zkpassportMessageError}`}>
+                <strong>Verification Status:</strong> {verified ? '✅ Verified' : '❌ Failed'}
               </div>
             )}
           </div>
         )}
 
         {/* Recovery Section - Only show if ZK module is enabled AND a guardian has been registered for this Safe */}
-        {safeInfo.modules.includes(ZK_MODULE_ADDRESS) && isSafeRegisteredForRecovery() && (
-          <div style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '24px',
-            marginBottom: '24px'
-          }}>
-            <h3 style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#1e293b',
-              marginBottom: '8px'
-            }}>
-              Safe Recovery
-            </h3>
-            <p style={{ color: '#64748b', marginBottom: '20px', fontSize: '14px' }}>
-              This Safe is registered for recovery. Verify your identity to recover access.
-            </p>
+        {mounted && safeInfo.modules.includes(ZK_MODULE_ADDRESS) && isSafeRegisteredForRecovery() && (
+          <div className={styles.zkpassportCard}>
+            <h3 className={styles.zkpassportCardTitle}>Safe Recovery</h3>
+            <p className={styles.zkpassportCardDescription}>This Safe is registered for recovery. Verify your identity to recover access.</p>
             
             {/* Recovery Status */}
-            <div style={{
-              padding: '12px',
-              borderRadius: '8px',
-              border: '2px solid #10b981',
-              backgroundColor: '#ecfdf5',
-              marginBottom: '20px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10b981'
-                }}></div>
-                <span style={{
-                  fontWeight: '600',
-                  color: '#065f46',
-                  fontSize: '14px'
-                }}>
-                  Recovery Available
-                </span>
+            <div className={styles.zkpassportRecoveryStatus}>
+              <div className={styles.zkpassportRecoveryStatusHeader}>
+                <div className={styles.zkpassportRecoveryStatusDot}></div>
+                <span className={styles.zkpassportRecoveryStatusLabel}>Recovery Available</span>
               </div>
-              <p style={{ 
-                margin: '8px 0 0 0', 
-                fontSize: '12px', 
-                fontFamily: 'monospace', 
-                color: '#059669',
-                wordBreak: 'break-all'
-              }}>
-                ID: {recovererUniqueId}
-              </p>
+              <p className={styles.zkpassportRecoveryStatusId}>ID: {recovererUniqueId}</p>
             </div>
 
             {/* Recovery Form */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}>
-                  Current Owner Address (to be replaced):
-                </label>
+            <div className={styles.zkpassportInputGroup}>
+              <div className={styles.zkpassportInputGroup}>
+                <label className={styles.zkpassportInputLabel}>Current Owner Address (to be replaced):</label>
                 <input
                   type="text"
                   value={oldOwnerAddress}
                   onChange={(e) => setOldOwnerAddress(e.target.value)}
                   placeholder="Enter current owner address (0x...)"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: `1px solid ${oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress) ? '#ef4444' : '#d1d5db'}`,
-                    fontSize: '14px',
-                    fontFamily: 'monospace',
-                    backgroundColor: oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress) ? '#fef2f2' : 'white',
-                    color: '#000000'
-                  }}
+                  className={`${styles.zkpassportInput} ${oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress) ? styles.zkpassportInputInvalid : ''}`}
                   disabled={recoveryInProgress || isPending || isConfirming}
                 />
                 {oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress) && (
-                  <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', margin: '4px 0 0 0' }}>
-                    Invalid address format. Must be 42 characters starting with 0x.
-                  </p>
+                  <p className={styles.zkpassportInputError}>Invalid address format. Must be 42 characters starting with 0x.</p>
                 )}
               </div>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ 
-                  display: 'block', 
-                  marginBottom: '6px', 
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#374151'
-                }}>
-                  New Owner Address (replacement):
-                </label>
+              <div className={styles.zkpassportInputGroup}>
+                <label className={styles.zkpassportInputLabel}>New Owner Address (replacement):</label>
                 <input
                   type="text"
                   value={newOwnerAddress}
                   onChange={(e) => setNewOwnerAddress(e.target.value)}
                   placeholder="Enter new owner address (0x...)"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: `1px solid ${newOwnerAddress && !isValidEthereumAddress(newOwnerAddress) ? '#ef4444' : '#d1d5db'}`,
-                    fontSize: '14px',
-                    fontFamily: 'monospace',
-                    backgroundColor: newOwnerAddress && !isValidEthereumAddress(newOwnerAddress) ? '#fef2f2' : 'white',
-                    color: '#000000'
-                  }}
+                  className={`${styles.zkpassportInput} ${newOwnerAddress && !isValidEthereumAddress(newOwnerAddress) ? styles.zkpassportInputInvalid : ''}`}
                   disabled={recoveryInProgress || isPending || isConfirming}
                 />
                 {newOwnerAddress && !isValidEthereumAddress(newOwnerAddress) && (
-                  <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', margin: '4px 0 0 0' }}>
-                    Invalid address format. Must be 42 characters starting with 0x.
-                  </p>
+                  <p className={styles.zkpassportInputError}>Invalid address format. Must be 42 characters starting with 0x.</p>
                 )}
               </div>
             </div>
@@ -1194,26 +791,16 @@ function ZKPassportSection({
                        !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
                        !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
                        !isConnectedToSepolia()}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: recoveryInProgress || isPending || isConfirming || readLoading || 
-                                 !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
-                                 !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
-                                 !isConnectedToSepolia()
-                                 ? '#9ca3af' : '#10b981',
-                color: 'white',
-                cursor: recoveryInProgress || isPending || isConfirming || readLoading || 
-                        !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
-                        !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
-                        !isConnectedToSepolia()
-                        ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                marginBottom: '16px'
-              }}
+              className={`${styles.zkpassportButton} ${
+                recoveryInProgress || isPending || isConfirming
+                  ? styles.zkpassportButtonLoading
+                  : (readLoading ||
+                     !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
+                     !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
+                     !isConnectedToSepolia())
+                  ? styles.zkpassportButtonDisabled
+                  : styles.zkpassportButtonPrimary
+              }`}
             >
               {!isConnectedToSepolia() ? 'Wrong Network' :
                !oldOwnerAddress.trim() || !newOwnerAddress.trim() ? 'Enter Owner Addresses' :
@@ -1227,56 +814,23 @@ function ZKPassportSection({
 
             {/* Recovery QR Code */}
             {recoveryQueryUrl && (
-              <div style={{
-                padding: '16px',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                textAlign: 'center',
-                marginBottom: '16px'
-              }}>
-                <p style={{ marginBottom: '12px', fontSize: '14px', color: '#64748b' }}>
-                  Scan with ZKPassport app to verify your identity for recovery:
-                </p>
+              <div className={styles.zkpassportQrContainer}>
+                <p className={styles.zkpassportQrText}>Scan with ZKPassport app to verify your identity for recovery:</p>
                 <QRCode value={recoveryQueryUrl} size={200} />
               </div>
             )}
 
             {/* Recovery Messages */}
             {recoveryMessage && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: recoveryMessage.includes('Error') || recoveryMessage.includes('failed') ? '#fef2f2' : '#f0f9ff',
-                border: `1px solid ${recoveryMessage.includes('Error') || recoveryMessage.includes('failed') ? '#fecaca' : '#bfdbfe'}`,
-                color: recoveryMessage.includes('Error') || recoveryMessage.includes('failed') ? '#991b1b' : '#1e40af',
-                fontSize: '14px',
-                marginBottom: '16px'
-              }}>
+              <div className={`${styles.zkpassportMessage} ${(recoveryMessage.includes('Error') || recoveryMessage.includes('failed')) ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
                 {recoveryMessage}
               </div>
             )}
 
             {/* Transaction Status Indicator */}
             {(isPending || isConfirming || isConfirmed) && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: isConfirmed ? '#ecfdf5' : '#f0f9ff',
-                border: `1px solid ${isConfirmed ? '#d1fae5' : '#bfdbfe'}`,
-                color: isConfirmed ? '#065f46' : '#1e40af',
-                fontSize: '14px',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: isConfirmed ? '#10b981' : isPending ? '#f59e0b' : '#3b82f6',
-                  opacity: !isConfirmed ? 0.7 : 1
-                }}></div>
+              <div className={`${styles.zkpassportStatus} ${isConfirmed ? styles.zkpassportStatusSuccess : styles.zkpassportStatusPending}`}>
+                <div className={styles.zkpassportStatusIndicator}></div>
                 <span>
                   {isPending && '⏳ Waiting for wallet signature...'}
                   {isConfirming && '🔄 Confirming transaction on network...'}
@@ -1287,82 +841,34 @@ function ZKPassportSection({
 
             {/* Recovery Results */}
             {recoveryUniqueIdentifier && (
-              <div style={{ marginBottom: '16px' }}>
-                <p style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>
-                  Recovery Unique Identifier:
-                </p>
-                <p style={{ 
-                  fontSize: '12px', 
-                  fontFamily: 'monospace', 
-                  color: '#64748b',
-                  wordBreak: 'break-all',
-                  backgroundColor: 'white',
-                  padding: '8px',
-                  borderRadius: '4px'
-                }}>
-                  {recoveryUniqueIdentifier}
-                </p>
+              <div className={styles.zkpassportIdentifier}>
+                <p className={styles.zkpassportIdentifierLabel}>Recovery Unique Identifier:</p>
+                <p className={styles.zkpassportIdentifierValue}>{recoveryUniqueIdentifier}</p>
               </div>
             )}
 
             {recoveryVerified !== undefined && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                backgroundColor: recoveryVerified ? '#ecfdf5' : '#fef2f2',
-                border: `1px solid ${recoveryVerified ? '#d1fae5' : '#fecaca'}`,
-                color: recoveryVerified ? '#065f46' : '#991b1b',
-                fontSize: '14px'
-              }}>
-                <strong>Recovery Verification Status:</strong> {recoveryVerified ? "✅ Verified" : "❌ Failed"}
+              <div className={`${styles.zkpassportMessage} ${recoveryVerified ? styles.zkpassportStatusSuccess : styles.zkpassportMessageError}`}>
+                <strong>Recovery Verification Status:</strong> {recoveryVerified ? '✅ Verified' : '❌ Failed'}
               </div>
             )}
           </div>
         )}
 
         {/* Info message when module is enabled but no guardian is registered */}
-        {safeInfo.modules.includes(ZK_MODULE_ADDRESS) && !isSafeRegisteredForRecovery() && !readLoading && (
-          <div style={{
-            backgroundColor: '#f8fafc',
-            borderRadius: '12px',
-            padding: '24px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <div style={{
-              padding: '16px',
-              backgroundColor: '#f0f9ff',
-              borderRadius: '8px',
-              border: '1px solid #bfdbfe',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                fontSize: '24px',
-                marginBottom: '8px'
-              }}>
+        {mounted && safeInfo.modules.includes(ZK_MODULE_ADDRESS) && !isSafeRegisteredForRecovery() && !readLoading && (
+          <div className={styles.zkpassportInfoCard}>
+            <div className={styles.zkpassportInfoContent}>
+              <div className={styles.zkpassportInfoIcon}>
                 🛡️
               </div>
-              <h4 style={{
-                fontSize: '16px',
-                fontWeight: '600',
-                color: '#1e40af',
-                marginBottom: '8px',
-                margin: '0 0 8px 0'
-              }}>
+              <h4 className={styles.zkpassportInfoTitle}>
                 No Recovery Guardian Set
               </h4>
-              <p style={{
-                fontSize: '14px',
-                color: '#1e40af',
-                marginBottom: '12px',
-                margin: '0 0 12px 0'
-              }}>
+              <p className={styles.zkpassportInfoDescription}>
                 Register a guardian above to enable Safe recovery functionality.
               </p>
-              <p style={{
-                fontSize: '12px',
-                color: '#64748b',
-                margin: '0'
-              }}>
+              <p className={styles.zkpassportInfoNote}>
                 Once registered, you'll be able to recover access to this Safe using ZK identity verification.
               </p>
             </div>

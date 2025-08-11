@@ -3,8 +3,8 @@ pragma solidity ^0.8.28;
 
 import "@safe-global/safe-contracts/contracts/common/Enum.sol";
 import "@safe-global/safe-contracts/contracts/Safe.sol";
-import "../interface/IOwnerManager.sol";
-import "../interface/IZKPassportVerifier.sol";
+import "../interfaces/IOwnerManager.sol";
+import "../interfaces/IZKPassportVerifier.sol";
 
 /**
  * @title SafeRecoveryModule
@@ -22,6 +22,7 @@ contract ZKPassportSafeRecovery {
     
     /// @notice Maps Safe addresses to their registered recovery identifiers
     mapping(address => bytes32) public safeToRecoverer;
+    mapping(bytes => bool) public isProofUsed;
 
     // ============ EVENTS ============
     
@@ -48,6 +49,7 @@ contract ZKPassportSafeRecovery {
     error SafeNotRegistered();
     error OwnerSwapFailed();
     error ZeroAddress();
+    error ProofAlreadyUsed();
 
     // ============ CONSTRUCTOR ============
     
@@ -62,22 +64,25 @@ contract ZKPassportSafeRecovery {
     
     /// @notice Registers a Safe for recovery using ZK proof
     /// @param params ZK proof verification parameters
-    /// @param safeAddress Address of the Safe to register
     /// @dev The caller must provide a valid ZK proof of their identity
     function register(
-        ProofVerificationParams calldata params,
-        address safeAddress
+        ProofVerificationParams calldata params
     ) external {
-        require(msg.sender == safeAddress, "Only Safe can register a guardian");
-        if (safeAddress == address(0)) revert ZeroAddress();
-        
         // Verify the ZK proof
         (bool verified, bytes32 uniqueIdentifier) = zkPassportVerifier.verifyProof(params);
         if (!verified) revert InvalidProof();
 
+        bytes memory data = zkPassportVerifier.getBindProofInputs(
+          params.committedInputs,
+          params.committedInputCounts
+        );
+
+        (address safeAddress,,) = zkPassportVerifier.getBoundData(data);
+        require(msg.sender == safeAddress, "Only Safe can register a guardian");
+        if (safeAddress == address(0)) revert ZeroAddress();
+        
         // Store the unique identifier for this Safe
         safeToRecoverer[safeAddress] = uniqueIdentifier;
-
         emit SafeRegistered(safeAddress, uniqueIdentifier);
     }
 
@@ -85,23 +90,30 @@ contract ZKPassportSafeRecovery {
     /// @param params ZK proof verification parameters
     /// @param safeAddress Address of the Safe to recover
     /// @param oldOwner Current owner to be replaced
-    /// @param newOwner New owner address
     /// @param previousOwner Owner before oldOwner in the linked list
     /// @dev The caller must provide the same ZK proof used during registration
     function recover(
         ProofVerificationParams calldata params,
         address safeAddress,
         address oldOwner,
-        address newOwner,
         address previousOwner
     ) external {
-        if (safeAddress == address(0) || oldOwner == address(0) || newOwner == address(0)) {
+        if (safeAddress == address(0) || oldOwner == address(0) ) {
             revert ZeroAddress();
         }
 
         // Verify the ZK proof
         (bool verified, bytes32 uniqueIdentifier) = zkPassportVerifier.verifyProof(params);
         if (!verified) revert InvalidProof();
+        if (isProofUsed[params.proof]) revert ProofAlreadyUsed();
+        isProofUsed[params.proof] = true;
+        
+        bytes memory data = zkPassportVerifier.getBindProofInputs(
+          params.committedInputs,
+          params.committedInputCounts
+        );
+
+        (address newOwner,,) = zkPassportVerifier.getBoundData(data);
 
         // Check if the Safe is registered with this identifier
         if (safeToRecoverer[safeAddress] != uniqueIdentifier) {
