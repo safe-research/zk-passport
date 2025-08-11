@@ -1,44 +1,55 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.28;
+
+import "../../interfaces/IZKPassportVerifier.sol";
 
 /**
  * @title MockZKPassportVerifier
- * @notice Mock contract for testing SafeRecovery functionality
- * @dev This contract simulates the ZKPassport verifier behavior for testing
+ * @notice Mock verifier contract for testing
  */
+contract MockZKPassportVerifier is IZKPassportVerifier {
+    bool public verificationResult;
+    bytes32 public uniqueIdentifier;
+    address public boundAddress1;
+    address public boundAddress2;
+    address public boundAddress3;
 
-struct ProofVerificationParams {
-    bytes32 vkeyHash;
-    bytes proof;
-    bytes32[] publicInputs;
-    bytes committedInputs;
-    uint256[] committedInputCounts;
-    uint256 validityPeriodInDays;
-    string domain;
-    string scope;
-    bool devMode;
-}
-
-contract MockZKPassportVerifier {
-    bool private _verificationResult;
-    bytes32 private _uniqueIdentifier;
-
-    /// @notice Sets the verification result for testing
-    /// @param result Whether the proof should be considered valid
-    /// @param identifier The unique identifier to return
-    function setVerificationResult(bool result, bytes32 identifier) external {
-        _verificationResult = result;
-        _uniqueIdentifier = identifier;
+    function setVerificationResult(bool _result, bytes32 _identifier) external {
+        verificationResult = _result;
+        uniqueIdentifier = _identifier;
     }
 
-    /// @notice Mock implementation of verifyProof
-    /// @return verified The verification result set by setVerificationResult
-    /// @return uniqueIdentifier The unique identifier set by setVerificationResult
-    function verifyProof(
-        ProofVerificationParams calldata params
-    ) external view returns (bool verified, bytes32 uniqueIdentifier) {
-        // Silence unused parameter warning
-        params;
-        return (_verificationResult, _uniqueIdentifier);
+    function setBoundData(address _addr1, address _addr2, address _addr3) external {
+        boundAddress1 = _addr1;
+        boundAddress2 = _addr2;
+        boundAddress3 = _addr3;
+    }
+
+    function verifyProof(ProofVerificationParams calldata) 
+        external 
+        view 
+        override 
+        returns (bool, bytes32) 
+    {
+        return (verificationResult, uniqueIdentifier);
+    }
+
+    function getBindProofInputs(bytes calldata, uint256[] calldata) 
+        external 
+        pure 
+        override 
+        returns (bytes memory) 
+    {
+        // Return dummy data
+        return abi.encode("mock_data");
+    }
+
+    function getBoundData(bytes calldata) 
+        external 
+        view 
+        override 
+        returns (address, address, address) 
+    {
+        return (boundAddress1, boundAddress2, boundAddress3);
     }
 }

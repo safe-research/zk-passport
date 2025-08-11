@@ -4,10 +4,14 @@
   "main": "hardhat.config.js",
   "scripts": {
     "test": "hardhat test",
+    "test:coverage": "hardhat coverage",
+    "test:gas": "REPORT_GAS=true hardhat test",
     "compile": "hardhat compile",
     "deploy:recovery": "hardhat run scripts/deploy-recovery.js --network sepolia",
     "deploy:recovery:localhost": "hardhat run scripts/deploy-recovery.js --network localhost",
-    "verify:recovery": "hardhat verify --network sepolia"
+    "verify:recovery": "hardhat verify --network sepolia",
+    "clean": "hardhat clean",
+    "size": "hardhat size-contracts"
   },
   "keywords": [],
   "author": "",
