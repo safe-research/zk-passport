@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { ZKPassport, ProofResult } from "@zkpassport/sdk"
 import Safe, { Eip1193Provider } from '@safe-global/protocol-kit'
@@ -26,6 +26,7 @@ interface ZKPassportSectionProps {
   recovererUniqueId: any
   readError: boolean
   readLoading: boolean
+  refetchRecoverer?: () => void
   isConnectedAddressOwner: () => boolean
   isSafeRegisteredForRecovery: () => boolean
   isConnectedToSepolia: () => boolean
@@ -42,6 +43,7 @@ function ZKPassportSection({
   isConnectedAddressOwner,
   isSafeRegisteredForRecovery,
   isConnectedToSepolia,
+  refetchRecoverer,
   handleLoad
 }: ZKPassportSectionProps) {
   const { writeContract, data: hash, error: writeError, isPending } = useWriteContract()
@@ -102,100 +104,56 @@ function ZKPassportSection({
     }
   }, [])
 
-  // Monitor transaction status for recovery
-  useEffect(() => {
-    if (hash) {
-      console.log("Transaction hash:", hash)
-      setRecoveryMessage(`Transaction submitted! Hash: ${hash}`)
-    }
-  }, [hash])
-
-  useEffect(() => {
-    if (isConfirming) {
-      console.log("Transaction confirming...")
-      setRecoveryMessage("Transaction confirming...")
-    }
-  }, [isConfirming])
-
   useEffect(() => {
     if (isConfirmed) {
-      console.log("Transaction confirmed!")
-      setRecoveryMessage("Transaction confirmed successfully!")
       setRecoveryInProgress(false)
       
       // Automatically refresh Safe information after successful transaction
       setTimeout(() => {
         handleLoad()
-        console.log("Safe information refreshed after transaction confirmation")
       }, 2000)
     }
   }, [isConfirmed, handleLoad])
 
-  useEffect(() => {
-    if (writeError) {
-      console.error("Transaction error:", writeError)
-      setRecoveryMessage(`Transaction failed: ${writeError.message}`)
-      setRecoveryInProgress(false)
-    }
-  }, [writeError])
-
   // Monitor guardian registration transaction status
   useEffect(() => {
-    if (guardianTxHash) {
-      console.log("Guardian registration transaction hash:", guardianTxHash)
-      setMessage(`Guardian registration transaction submitted! Hash: ${guardianTxHash}`)
-    }
-  }, [guardianTxHash])
-
-  useEffect(() => {
-    if (isGuardianTxConfirming) {
-      console.log("Guardian registration transaction confirming...")
-      setMessage("Guardian registration transaction confirming...")
-    }
-  }, [isGuardianTxConfirming])
-
-  useEffect(() => {
     if (isGuardianTxConfirmed) {
-      console.log("Guardian registration transaction confirmed!")
-      setMessage("Guardian registration confirmed successfully!")
       setRequestInProgress(false)
       
       // Automatically refresh Safe information after successful guardian registration
       setTimeout(() => {
         handleLoad()
-        console.log("Safe information refreshed after guardian registration confirmation")
+        try { refetchRecoverer && refetchRecoverer() } catch (_) {}
       }, 2000)
     }
   }, [isGuardianTxConfirmed, handleLoad])
 
   // Monitor enable module transaction status
   useEffect(() => {
-    if (enableModuleTxHash) {
-      console.log("Enable module transaction hash:", enableModuleTxHash)
-      setEnableModuleMessage(`Enable module transaction submitted! Hash: ${enableModuleTxHash}`)
-    }
-  }, [enableModuleTxHash])
-
-  useEffect(() => {
-    if (isEnableModuleTxConfirming) {
-      console.log("Enable module transaction confirming...")
-      setEnableModuleMessage("Enable module transaction confirming...")
-    }
-  }, [isEnableModuleTxConfirming])
-
-  useEffect(() => {
     if (isEnableModuleTxConfirmed) {
-      console.log("Enable module transaction confirmed!")
-      setEnableModuleMessage("ZK Module enabled successfully!")
       setEnableModuleLoading(false)
       
       // Automatically refresh Safe information after successful module enablement
       setTimeout(() => {
         handleLoad()
-        console.log("Safe information refreshed after enable module confirmation")
       }, 2000)
     }
   }, [isEnableModuleTxConfirmed, handleLoad])
+
+  // Derived status messages
+  const guardianTxMessage = useMemo(() => {
+    if (!guardianTxHash) return ''
+    if (isGuardianTxConfirming) return 'Guardian registration transaction confirming...'
+    if (isGuardianTxConfirmed) return 'Guardian registration confirmed successfully!'
+    return `Guardian registration transaction submitted! Hash: ${guardianTxHash}`
+  }, [guardianTxHash, isGuardianTxConfirming, isGuardianTxConfirmed])
+
+  const enableModuleTxMessage = useMemo(() => {
+    if (!enableModuleTxHash) return ''
+    if (isEnableModuleTxConfirming) return 'Enable module transaction confirming...'
+    if (isEnableModuleTxConfirmed) return 'ZK Module enabled successfully!'
+    return `Enable module transaction submitted! Hash: ${enableModuleTxHash}`
+  }, [enableModuleTxHash, isEnableModuleTxConfirming, isEnableModuleTxConfirmed])
 
   const handleEnableModule = async () => {
     if (!account.address || !safeInfo) {
@@ -242,8 +200,6 @@ function ZKPassportSection({
       }
 
       const transaction = await protocolKit.createTransaction({transactions: [safeTransactionData]})
-      const txResponse = await protocolKit.signTransaction(transaction)
-      console.log("Enable module transaction signed:", txResponse)
       
       const executeTxResponse = await protocolKit.executeTransaction(transaction)
       const txHash = executeTxResponse.hash
@@ -373,7 +329,6 @@ function ZKPassportSection({
       }
 
       const transaction = await protocolKit.createTransaction({transactions: [safeTransactionData]})
-      await protocolKit.signTransaction(transaction)
       const executeTxResponse = await protocolKit.executeTransaction(transaction)
       const txHash = executeTxResponse.hash
       console.log("Execute transaction response", executeTxResponse)
@@ -651,9 +606,9 @@ function ZKPassportSection({
                !isConnectedAddressOwner() ? 'Owner Access Required' : 'Enable ZK Recovery Module'}
             </button>
 
-            {enableModuleMessage && (
+            {(enableModuleMessage || enableModuleTxMessage) && (
               <div className={`${styles.zkpassportMessage} ${enableModuleMessage.includes('Error') ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
-                {enableModuleMessage}
+                {enableModuleMessage || enableModuleTxMessage}
               </div>
             )}
 
@@ -718,9 +673,9 @@ function ZKPassportSection({
               </div>
             )}
 
-            {message && (
+            {(message || guardianTxMessage) && (
               <div className={`${styles.zkpassportMessage} ${message.includes('Error') ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
-                {message}
+                {message || guardianTxMessage}
               </div>
             )}
 

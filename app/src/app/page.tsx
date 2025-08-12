@@ -36,7 +36,7 @@ function App() {
   } | null>(null)
 
   // Read the safeToRecoverer mapping to check if Safe is registered for recovery
-  const { data: recovererUniqueId, isError: readError, isLoading: readLoading } = useReadContract({
+  const { data: recovererUniqueId, isError: readError, isLoading: readLoading, refetch: refetchRecoverer } = useReadContract({
     address: ZK_MODULE_ADDRESS as `0x${string}`,
     abi: ZK_MODULE_ABI,
     functionName: 'safeToRecoverer',
@@ -349,6 +349,7 @@ function App() {
                 recovererUniqueId={recovererUniqueId}
                 readError={readError}
                 readLoading={readLoading}
+                refetchRecoverer={() => { try { refetchRecoverer?.() } catch (_) {} }}
                 isConnectedAddressOwner={() => isConnectedAddressOwner(account, safeInfo)}
                 isSafeRegisteredForRecovery={() => isSafeRegisteredForRecovery(recovererUniqueId, readError, readLoading)}
                 isConnectedToSepolia={() => isConnectedToSepolia(account)}
