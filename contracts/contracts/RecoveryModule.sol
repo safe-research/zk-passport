@@ -133,12 +133,6 @@ contract ZKPassportSafeRecovery {
 
         if (previousOwner == address(0) || oldOwner == address(0) || newOwner == address(0) || safeAddress == address(0)) {
             revert ZeroAddress();
-        } else if (previousOwner == newOwner) {
-            revert OwnerSwapFailed();
-        }
-
-        if (previousOwner == oldOwner) {
-            revert OwnerSwapFailed();
         }
 
         // Check if the Safe is registered with this identifier
