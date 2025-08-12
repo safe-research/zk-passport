@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect, useReadContract, useSwitchChain } from 'wagmi'
 import Safe, { Eip1193Provider } from '@safe-global/protocol-kit'
 import ZKPassportSection from '../components/ZKPassportSection'
+import CandideZKPassportSection from '../components/CandideZKPassportSection'
 import {
   isConnectedAddressOwner,
   isSafeRegisteredForRecovery,
@@ -20,10 +21,11 @@ function App() {
   const { disconnect } = useDisconnect()
   const { chains, switchChain, isPending: isSwitchingChain } = useSwitchChain()
 
-  const [ethereumAddress, setEthereumAddress] = useState('0x7af06A5E7226075DF00402A556f5529cf6D836CC')
+  const [ethereumAddress, setEthereumAddress] = useState('')
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [recoveryType, setRecoveryType] = useState<'zkpassport' | 'candide' | null>(null)
 
   const [safeInfo, setSafeInfo] = useState<{
     address: string
@@ -120,6 +122,30 @@ function App() {
             Secure Safe wallet recovery using ZKPassport identity verification
           </p>
         </div>
+
+        {/* Recovery Type Selection - Full Width */}
+        {account.status === 'connected' && safeInfo && (
+          <div className={styles.card}>
+            <h2 className={styles.cardTitle}>Choose Recovery Type</h2>
+            <p className={styles.cardDescription}>Select which recovery flow you want to use</p>
+            <div className={styles.flexColumn}>
+              <button
+                type="button"
+                onClick={() => setRecoveryType('candide')}
+                className={`${styles.button} ${styles.buttonFullWidth} ${recoveryType === 'candide' ? styles.buttonPrimary : ''}`}
+              >
+                Candide ZKPassport
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecoveryType('zkpassport')}
+                className={`${styles.button} ${styles.buttonFullWidth} ${recoveryType === 'zkpassport' ? styles.buttonPrimary : ''}`}
+              >
+                ZKPassport
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Main Grid Layout */}
         <div className={`${styles.gridLayout} ${account.status === 'connected' && safeInfo ? styles.gridDouble : styles.gridSingle}`}>
@@ -315,7 +341,13 @@ function App() {
                 </div>
               </div>
 
-              {/* ZK-Passport Section */}
+            </div>
+          )}
+        </div>
+        {/* Recovery Sections - Full Width */}
+        {account.status === 'connected' && safeInfo && (
+          <>
+            {recoveryType === 'zkpassport' && (
               <ZKPassportSection
                 account={account}
                 safeInfo={safeInfo}
@@ -328,9 +360,13 @@ function App() {
                 isConnectedToSepolia={() => isConnectedToSepolia(account)}
                 handleLoad={handleLoad}
               />
-            </div>
-          )}
-        </div>
+            )}
+
+            {recoveryType === 'candide' && (
+              <CandideZKPassportSection />
+            )}
+          </>
+        )}
       </div>
     </div>
   )

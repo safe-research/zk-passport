@@ -163,6 +163,10 @@
   border: none;
 }
 
+.buttonFullWidth {
+  width: 100%;
+}
+
 .buttonPrimary {
   background-color: #3b82f6;
   color: white;
