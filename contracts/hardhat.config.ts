@@ -1,10 +1,10 @@
-require("@nomicfoundation/hardhat-toolbox");
+import '@nomicfoundation/hardhat-toolbox'
 require("dotenv").config();
+import './tasks/e2e-recovery'
 
-/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.30", // Updated to match your contract
+    version: "0.8.28",
     settings: {
       optimizer: {
         enabled: true,

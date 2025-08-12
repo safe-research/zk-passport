@@ -26,9 +26,11 @@
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
     "@rarimo/passport-contracts": "^0.4.3",
+    "@safe-global/protocol-kit": "^6.1.0",
     "@safe-global/safe-contracts": "1.4.1-2",
     "@selfxyz/contracts": "^1.2.0",
     "hardhat-dependency-compiler": "^1.2.1",
-    "react-qr-code": "^2.0.18"
+    "react-qr-code": "^2.0.18",
+    "viem": "^2.33.3"
   }
 }

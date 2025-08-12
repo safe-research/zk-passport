@@ -316,6 +316,7 @@ function ZKPassportSection({
         devMode: false,
       })
 
+
       const safeTransactionData: MetaTransactionData = {
         to: ZK_MODULE_ADDRESS,
         value: '0', // 1 wei
