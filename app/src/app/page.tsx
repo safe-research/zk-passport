@@ -332,13 +332,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* ZK Module Status */}
-                <div className={`${styles.moduleStatus} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.moduleStatusEnabled : styles.moduleStatusDisabled}`}>
-                  <div className={safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.statusDotGreen : styles.statusDotRed}></div>
-                  <span className={`${styles.moduleStatusText} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.moduleStatusTextEnabled : styles.moduleStatusTextDisabled}`}>
-                    ZK Recovery Module: {safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? 'ENABLED' : 'DISABLED'}
-                  </span>
-                </div>
+                {/* ZK Module Status moved into ZKPassportSection */}
               </div>
 
             </div>
@@ -351,7 +345,7 @@ function App() {
               <ZKPassportSection
                 account={account}
                 safeInfo={safeInfo}
-                ethereumAddress={ethereumAddress}
+                safeAddress={ethereumAddress}
                 recovererUniqueId={recovererUniqueId}
                 readError={readError}
                 readLoading={readLoading}

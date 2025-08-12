@@ -6,7 +6,7 @@ import { ZKPassport, ProofResult } from "@zkpassport/sdk"
 import Safe, { Eip1193Provider } from '@safe-global/protocol-kit'
 import QRCode from "react-qr-code"
 import { MetaTransactionData, OperationType } from '@safe-global/types-kit'
-import { encodeFunctionData } from 'viem'
+import { encodeAbiParameters, encodeFunctionData } from 'viem'
 import { isValidEthereumAddress } from '../utils/safeHelpers'
 import styles from './ZKPassportSection.module.css'
 import { ZK_MODULE_ADDRESS, WITNESS_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
@@ -22,7 +22,7 @@ interface ZKPassportSectionProps {
     isDeployed: boolean
     modules: string[]
   } | null
-  ethereumAddress: string
+  safeAddress: string
   recovererUniqueId: any
   readError: boolean
   readLoading: boolean
@@ -35,7 +35,7 @@ interface ZKPassportSectionProps {
 function ZKPassportSection({
   account,
   safeInfo,
-  ethereumAddress,
+  safeAddress,
   recovererUniqueId,
   readError,
   readLoading,
@@ -218,7 +218,7 @@ function ZKPassportSection({
       const protocolKit = await Safe.init({
         provider: provider as Eip1193Provider,
         signer: account.address,
-        safeAddress: ethereumAddress
+        safeAddress: safeAddress
       })
 
       // Create transaction to enable the module
@@ -351,7 +351,7 @@ function ZKPassportSection({
       const protocolKit = await Safe.init({
         provider: provider as Eip1193Provider,
         signer: account.address,
-        safeAddress: ethereumAddress
+        safeAddress: safeAddress
       })
 
       // Get verification parameters
@@ -444,7 +444,16 @@ function ZKPassportSection({
       onError,
     } = queryBuilder
       .bind('user_address', newOwnerAddress)
+      .bind('custom_data', encodeAbiParameters(
+       [{name: 'previousOwner', type: 'address'}, {name: 'oldOwner', type: 'address'}, {name: 'newOwner', type: 'address'}, {name: 'safeAddress', type: 'address'}],
+      [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
+      ))
       .done()
+
+    console.log(encodeAbiParameters(
+      [{name: 'previousOwner', type: 'address'}, {name: 'oldOwner', type: 'address'}, {name: 'newOwner', type: 'address'}, {name: 'safeAddress', type: 'address'}],
+     [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
+     ))
 
     setRecoveryQueryUrl(url)
     console.log("Recovery QR URL:", url)
@@ -515,9 +524,6 @@ function ZKPassportSection({
           // @ts-ignore - Type compatibility between ZKPassport SDK and wagmi
           args: [
             wagmiVerifierParams,
-            ethereumAddress as `0x${string}`, 
-            oldOwnerAddress as `0x${string}`, 
-            WITNESS_ADDRESS as `0x${string}`, 
           ],
         })
 
@@ -592,6 +598,14 @@ function ZKPassportSection({
         <p className={styles.zkpassportDescription}>
           Secure identity verification and recovery using Zero-Knowledge proofs
         </p>
+
+        {/* ZK Module Status Indicator moved from page.tsx */}
+        <div className={`${styles.zkpassportStatus} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.zkpassportStatusSuccess : styles.zkpassportStatusDisabled}`}>
+          <div className={styles.zkpassportStatusIndicator}></div>
+          <span>
+            ZK Recovery Module: {safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? 'ENABLED' : 'DISABLED'}
+          </span>
+        </div>
 
         {/* Enable Module Card - Only show if ZK module is NOT enabled */}
         {mounted && !safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (

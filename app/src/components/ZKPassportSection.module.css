@@ -194,6 +194,17 @@
   opacity: 0.7;
 }
 
+/* Disabled/Error style for status blocks */
+.zkpassportStatusDisabled {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.zkpassportStatusDisabled .zkpassportStatusIndicator {
+  background-color: #ef4444;
+}
+
 .zkpassportQrContainer {
   padding: 16px;
   background-color: white;

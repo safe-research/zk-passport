@@ -60,6 +60,29 @@ contract ZKPassportSafeRecovery {
         zkPassportVerifier = IZKPassportVerifier(_verifierAddress);
     }
 
+    // ========= INTERNAL: hex string decoding =========
+    function _fromHexChar(uint8 c) internal pure returns (uint8) {
+        if (c >= uint8(bytes1('0')) && c <= uint8(bytes1('9'))) return c - uint8(bytes1('0'));
+        if (c >= uint8(bytes1('a')) && c <= uint8(bytes1('f'))) return 10 + c - uint8(bytes1('a'));
+        if (c >= uint8(bytes1('A')) && c <= uint8(bytes1('F'))) return 10 + c - uint8(bytes1('A'));
+        revert("invalid hex char");
+    }
+
+    function _hexStringToBytes(string memory s) internal pure returns (bytes memory) {
+        bytes memory ss = bytes(s);
+        uint256 start = (ss.length >= 2 && ss[0] == '0' && (ss[1] == 'x' || ss[1] == 'X')) ? 2 : 0;
+        require((ss.length - start) % 2 == 0, "hex length must be even");
+
+        bytes memory r = new bytes((ss.length - start) / 2);
+        for (uint256 i = 0; i < r.length; i++) {
+            r[i] = bytes1(
+                _fromHexChar(uint8(ss[start + 2*i])) * 16 +
+                _fromHexChar(uint8(ss[start + 2*i + 1]))
+            );
+        }
+        return r;
+    }
+
     // ============ EXTERNAL FUNCTIONS ============
     
     /// @notice Registers a Safe for recovery using ZK proof
@@ -88,20 +111,10 @@ contract ZKPassportSafeRecovery {
 
     /// @notice Recovers a Safe by swapping owners using ZK proof
     /// @param params ZK proof verification parameters
-    /// @param safeAddress Address of the Safe to recover
-    /// @param oldOwner Current owner to be replaced
-    /// @param previousOwner Owner before oldOwner in the linked list
     /// @dev The caller must provide the same ZK proof used during registration
     function recover(
-        ProofVerificationParams calldata params,
-        address safeAddress,
-        address oldOwner,
-        address previousOwner
+        ProofVerificationParams calldata params
     ) external {
-        if (safeAddress == address(0) || oldOwner == address(0) ) {
-            revert ZeroAddress();
-        }
-
         // Verify the ZK proof
         (bool verified, bytes32 uniqueIdentifier) = zkPassportVerifier.verifyProof(params);
         if (!verified) revert InvalidProof();
@@ -113,7 +126,20 @@ contract ZKPassportSafeRecovery {
           params.committedInputCounts
         );
 
-        (address newOwner,,) = zkPassportVerifier.getBoundData(data);
+        (,,string memory customData) = zkPassportVerifier.getBoundData(data);
+        // customData is a hex string (0x...) of abi.encode(...) parameters. Decode to bytes, then abi.decode
+        bytes memory payload = _hexStringToBytes(customData);
+        (address previousOwner, address oldOwner, address newOwner, address safeAddress) = abi.decode(payload, (address, address, address, address));
+
+        if (previousOwner == address(0) || oldOwner == address(0) || newOwner == address(0) || safeAddress == address(0)) {
+            revert ZeroAddress();
+        } else if (previousOwner == newOwner) {
+            revert OwnerSwapFailed();
+        }
+
+        if (previousOwner == oldOwner) {
+            revert OwnerSwapFailed();
+        }
 
         // Check if the Safe is registered with this identifier
         if (safeToRecoverer[safeAddress] != uniqueIdentifier) {
