@@ -15,6 +15,13 @@ enum ProofType {
     ISSUING_COUNTRY_EXCLUSION
 }
 
+enum BoundDataIdentifier {
+    NONE,
+    USER_ADDRESS,
+    CHAIN_ID,
+    CUSTOM_DATA
+}
+
 // ============ STRUCTS ============
 
 /// @notice Parameters required for ZK proof verification

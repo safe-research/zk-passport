@@ -21,8 +21,9 @@ async function main() {
 
   // Deploy the SafeRecovery contract
   console.log("\nDeploying SafeRecovery contract...");
-  const SafeRecovery = await hre.ethers.getContractFactory("SafeRecovery");
+  const SafeRecovery = await hre.ethers.getContractFactory("ZKPassportSafeRecovery");
   const safeRecovery = await SafeRecovery.deploy(verifierAddress);
+  console.log("SafeRecovery deployed to:", safeRecovery.target);
 
   await safeRecovery.waitForDeployment();
   const contractAddress = await safeRecovery.getAddress();

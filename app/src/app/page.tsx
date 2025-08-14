@@ -36,7 +36,7 @@ function App() {
   } | null>(null)
 
   // Read the safeToRecoverer mapping to check if Safe is registered for recovery
-  const { data: recovererUniqueId, isError: readError, isLoading: readLoading } = useReadContract({
+  const { data: recovererUniqueId, isError: readError, isLoading: readLoading, refetch: refetchRecoverer } = useReadContract({
     address: ZK_MODULE_ADDRESS as `0x${string}`,
     abi: ZK_MODULE_ABI,
     functionName: 'safeToRecoverer',
@@ -332,13 +332,7 @@ function App() {
                   </div>
                 </div>
 
-                {/* ZK Module Status */}
-                <div className={`${styles.moduleStatus} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.moduleStatusEnabled : styles.moduleStatusDisabled}`}>
-                  <div className={safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.statusDotGreen : styles.statusDotRed}></div>
-                  <span className={`${styles.moduleStatusText} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.moduleStatusTextEnabled : styles.moduleStatusTextDisabled}`}>
-                    ZK Recovery Module: {safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? 'ENABLED' : 'DISABLED'}
-                  </span>
-                </div>
+                {/* ZK Module Status moved into ZKPassportSection */}
               </div>
 
             </div>
@@ -351,10 +345,11 @@ function App() {
               <ZKPassportSection
                 account={account}
                 safeInfo={safeInfo}
-                ethereumAddress={ethereumAddress}
+                safeAddress={ethereumAddress}
                 recovererUniqueId={recovererUniqueId}
                 readError={readError}
                 readLoading={readLoading}
+                refetchRecoverer={() => { try { refetchRecoverer?.() } catch (_) {} }}
                 isConnectedAddressOwner={() => isConnectedAddressOwner(account, safeInfo)}
                 isSafeRegisteredForRecovery={() => isSafeRegisteredForRecovery(recovererUniqueId, readError, readLoading)}
                 isConnectedToSepolia={() => isConnectedToSepolia(account)}
