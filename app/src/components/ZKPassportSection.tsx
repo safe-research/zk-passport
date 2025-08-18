@@ -263,7 +263,7 @@ function ZKPassportSection({
       onError,
     } = queryBuilder
     .bind('user_address', safeInfo!.address)
-      .done()
+    .done()
 
     setQueryUrl(url)
     console.log(url)

@@ -29,6 +29,7 @@
     "@safe-global/protocol-kit": "^6.1.0",
     "@safe-global/safe-contracts": "1.4.1-2",
     "@selfxyz/contracts": "^1.2.0",
+    "@zkpassport/sdk": "^0.7.1",
     "hardhat-dependency-compiler": "^1.2.1",
     "react-qr-code": "^2.0.18",
     "viem": "^2.33.3"
