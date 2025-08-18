@@ -1,23 +1,26 @@
 {
-  "name": "app2",
+  "name": "zk-passport-app",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@eslint/js": "^9.33.0",
     "@rarimo/zk-passport-react": "^1.1.2",
-    "@safe-global/protocol-kit": "^6.1.0",
-    "@safe-global/types-kit": "^3.0.0",
+    "@safe-global/protocol-kit": "4.1.0",
+    "@safe-global/safe-apps-sdk": "9.1.0",
+    "@safe-global/types-kit": "3.0.0",
     "@tanstack/react-query": "5.45.1",
     "@zkpassport/sdk": "^0.7.0",
-    "next": "14.2.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-qr-code": "^2.0.18",
+    "react-router-dom": "^6.26.0",
     "viem": "latest",
     "wagmi": "latest"
   },
@@ -25,13 +28,21 @@
     "@types/node": "^20.12.10",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vitejs/plugin-react": "^4.3.1",
     "@wagmi/cli": "latest",
     "bufferutil": "^4.0.8",
     "encoding": "^0.1.13",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
     "lokijs": "^1.5.12",
     "pino-pretty": "^10.3.1",
     "supports-color": "^9.4.0",
     "typescript": "^5.4.5",
-    "utf-8-validate": "^5.0.2"
+    "utf-8-validate": "^5.0.2",
+    "vite": "^5.3.4",
+    "vite-plugin-node-polyfills": "^0.24.0"
   }
 }

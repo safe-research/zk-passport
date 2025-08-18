@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect, useReadContract, useSwitchChain } from 'wagmi'
 import Safe, { Eip1193Provider } from '@safe-global/protocol-kit'
@@ -13,9 +11,11 @@ import {
   switchToSepolia
 } from '../utils/safeHelpers'
 import { ZK_MODULE_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
-import styles from './page.module.css'
+import styles from './HomePage.module.css'
 
-function App() {
+function HomePage() {
+  console.log('HomePage component rendering')
+  
   const account = useAccount()
   const { connectors, connect, status, error } = useConnect()
   const { disconnect } = useDisconnect()
@@ -367,4 +367,4 @@ function App() {
   )
 }
 
-export default App
+export default HomePage
