@@ -36,15 +36,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Install dependencies
-        working-directory: app
+        working-directory: zk-passport-app
         run: npm ci
       - name: Build
-        working-directory: app
+        working-directory: zk-passport-app
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: app/dist
+          path: zk-passport-app/dist
 
   # Deployment job
   deploy:
