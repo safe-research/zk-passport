@@ -14,6 +14,11 @@ export interface SafeInfo {
 export interface Account {
   address?: string
   chainId?: number
+  connector?: {
+    id: string
+    name: string
+    type: string
+  }
 }
 
 /**
@@ -77,4 +82,11 @@ export const switchToSepolia = (
   if (sepoliaChain) {
     switchChain({ chainId: sepoliaChain.id })
   }
+}
+
+/**
+ * Helper function to check if the current connector is Safe
+ */
+export const isSafeConnector = (account: Account): boolean => {
+  return account.connector?.id === 'safe' || (account.connector?.name?.toLowerCase().includes('safe') ?? false)
 }

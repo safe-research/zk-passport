@@ -10,7 +10,8 @@ import {
   isSafeRegisteredForRecovery,
   isConnectedToSepolia,
   getSepoliaChain,
-  switchToSepolia
+  switchToSepolia,
+  isSafeConnector
 } from '../utils/safeHelpers'
 import { ZK_MODULE_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
 import styles from './page.module.css'
@@ -25,7 +26,8 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
-  const [recoveryType, setRecoveryType] = useState<'zkpassport' | 'candide' | null>(null)
+  const [recoveryType, setRecoveryType] = useState<'zkpassport' | 'candide'>('zkpassport')
+  const [isAutoLoaded, setIsAutoLoaded] = useState(false)
 
   const [safeInfo, setSafeInfo] = useState<{
     address: string
@@ -47,8 +49,33 @@ function App() {
     setMounted(true)
   }, [])
 
-  const handleLoad = async () => {
-    if (!ethereumAddress.trim()) {
+  // Reset state when account changes
+  useEffect(() => {
+    if (account.status !== 'connected') {
+      setSafeInfo(null)
+      setEthereumAddress('')
+      setIsAutoLoaded(false)
+      setLoadError(null)
+    }
+  }, [account.status, account.address])
+
+  // Auto-load Safe information when connected via Safe connector
+  useEffect(() => {
+    if (account.status === 'connected' && 
+        account.address && 
+        isSafeConnector(account) && 
+        isConnectedToSepolia(account) && 
+        !safeInfo && 
+        !loading) {
+      console.log('Auto-loading Safe information for Safe connector')
+      handleLoad(account.address)
+    }
+  }, [account.status, account.address, account.connector?.id, account.chainId, safeInfo, loading])
+
+  const handleLoad = async (customAddress?: string) => {
+    const addressToLoad = customAddress || ethereumAddress.trim()
+    
+    if (!addressToLoad) {
       setLoadError('Please enter a Safe address')
       return
     }
@@ -67,7 +94,7 @@ function App() {
       const protocolKit = await Safe.init({
         provider: provider as Eip1193Provider,
         signer: account.address,
-        safeAddress: ethereumAddress.trim()
+        safeAddress: addressToLoad
       })
 
       // Check if the Safe is deployed
@@ -91,6 +118,12 @@ function App() {
         isDeployed,
         modules
       })
+
+      // Update the ethereumAddress state with the loaded address
+      if (customAddress) {
+        setEthereumAddress(safeAddress)
+        setIsAutoLoaded(true)
+      }
 
       console.log('Safe loaded successfully:', {
         address: safeAddress,
@@ -237,9 +270,14 @@ function App() {
             {/* Safe Loading Card */}
             {account.status === 'connected' && (
               <div className={`${styles.card} ${styles.cardLast}`}>
-                <h2 className={styles.cardTitle}>Load Safe Wallet</h2>
+                <h2 className={styles.cardTitle}>
+                  {isSafeConnector(account) ? 'Safe Wallet Detected' : 'Load Safe Wallet'}
+                </h2>
                 <p className={styles.cardDescription}>
-                  Enter your Safe wallet address to manage recovery settings
+                  {isSafeConnector(account) 
+                    ? 'Connected via Safe connector'
+                    : 'Enter your Safe wallet address to manage recovery settings'
+                  }
                 </p>
 
                 {/* Network warning for Safe loading */}
@@ -251,24 +289,44 @@ function App() {
                   </div>
                 )}
 
-                <div className={styles.inputGroup}>
-                  <input
-                    type="text"
-                    value={ethereumAddress}
-                    onChange={(e) => setEthereumAddress(e.target.value)}
-                    placeholder="Enter Safe address (0x...)"
-                    className={styles.input}
-                    disabled={loading || !isConnectedToSepolia(account)}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleLoad}
-                    disabled={loading || !isConnectedToSepolia(account)}
-                    className={`${styles.loadButton} ${loading || !isConnectedToSepolia(account) ? styles.buttonDisabled : styles.buttonPrimary}`}
-                  >
-                    {!isConnectedToSepolia(account) ? 'Wrong Network' : loading ? 'Loading...' : 'Load Safe'}
-                  </button>
-                </div>
+                {isSafeConnector(account) ? (
+                  <div className={styles.autoLoadInfo}>
+                    <div className={`${styles.connectionStatus} ${styles.connectionStatusConnected}`}>
+                      <p className={styles.connectionStatusText}>
+                        🔐 Safe Address: {account.address?.slice(0, 6)}...{account.address?.slice(-4)}
+                      </p>
+                      {loading && (
+                        <p className={styles.connectionStatusChain}>
+                          🔄 Loading Safe information...
+                        </p>
+                      )}
+                    </div>
+                    {!isConnectedToSepolia(account) && (
+                      <p className={styles.networkWarningText}>
+                        ⚠️ Please switch to Sepolia to load Safe information
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className={styles.inputGroup}>
+                    <input
+                      type="text"
+                      value={ethereumAddress}
+                      onChange={(e) => setEthereumAddress(e.target.value)}
+                      placeholder="Enter Safe address (0x...)"
+                      className={styles.input}
+                      disabled={loading || !isConnectedToSepolia(account)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleLoad()}
+                      disabled={loading || !isConnectedToSepolia(account)}
+                      className={`${styles.loadButton} ${loading || !isConnectedToSepolia(account) ? styles.buttonDisabled : styles.buttonPrimary}`}
+                    >
+                      {!isConnectedToSepolia(account) ? 'Wrong Network' : loading ? 'Loading...' : 'Load Safe'}
+                    </button>
+                  </div>
+                )}
 
                 {loadError && (
                   <div className={styles.errorMessage}>
