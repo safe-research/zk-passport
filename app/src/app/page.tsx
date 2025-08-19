@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect, useReadContract, useSwitchChain } from 'wagmi'
-import Safe, { Eip1193Provider } from '@safe-global/protocol-kit'
 import ZKPassportSection from '../components/ZKPassportSection'
 import CandideZKPassportSection from '../components/CandideZKPassportSection'
 import {
@@ -14,6 +13,7 @@ import {
   isSafeConnector
 } from '../utils/safeHelpers'
 import { ZK_MODULE_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
+import { useSafeInfo } from '../hooks/useSafeInfo'
 import styles from './page.module.css'
 
 function App() {
@@ -23,20 +23,21 @@ function App() {
   const { chains, switchChain, isPending: isSwitchingChain } = useSwitchChain()
 
   const [ethereumAddress, setEthereumAddress] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [loadError, setLoadError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [recoveryType, setRecoveryType] = useState<'zkpassport' | 'candide'>('zkpassport')
   const [isAutoLoaded, setIsAutoLoaded] = useState(false)
   const [moduleAddress, setModuleAddress] = useState(ZK_MODULE_ADDRESS)
 
-  const [safeInfo, setSafeInfo] = useState<{
-    address: string
-    owners: string[]
-    threshold: number
-    isDeployed: boolean
-    modules: string[]
-  } | null>(null)
+  // Use the Safe info hook
+  const { 
+    data: safeInfo, 
+    isLoading: loading, 
+    error: loadError, 
+    refetch: refetchSafeInfo 
+  } = useSafeInfo({ 
+    safeAddress: ethereumAddress,
+    enabled: !!ethereumAddress && isConnectedToSepolia(account)
+  })
 
   // Read the safeToRecoverer mapping to check if Safe is registered for recovery
   const { data: recovererUniqueId, isError: readError, isLoading: readLoading, refetch: refetchRecoverer } = useReadContract({
@@ -46,6 +47,20 @@ function App() {
     args: [ethereumAddress as `0x${string}`],
   })
 
+  // Log when recoverer data changes
+  useEffect(() => {
+    if (recovererUniqueId !== undefined) {
+      console.log('🔄 useReadContract: Recoverer data refreshed for Safe:', ethereumAddress, 'Data:', recovererUniqueId)
+    }
+  }, [recovererUniqueId, ethereumAddress])
+
+  // Log when recoverer data has errors
+  useEffect(() => {
+    if (readError) {
+      console.log('❌ useReadContract: Error refreshing recoverer data for Safe:', ethereumAddress)
+    }
+  }, [readError, ethereumAddress])
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -53,10 +68,8 @@ function App() {
   // Reset state when account changes
   useEffect(() => {
     if (account.status !== 'connected') {
-      setSafeInfo(null)
       setEthereumAddress('')
       setIsAutoLoaded(false)
-      setLoadError(null)
     }
   }, [account.status, account.address])
 
@@ -66,71 +79,12 @@ function App() {
         account.address && 
         isSafeConnector(account) && 
         isConnectedToSepolia(account) && 
-        !safeInfo && 
-        !loading) {
-      handleLoad(account.address)
+        !ethereumAddress) {
+      setEthereumAddress(account.address)
+      setIsAutoLoaded(true)
     }
-  }, [account.status, account.address, account.connector?.id, account.chainId, safeInfo, loading])
+  }, [account.status, account.address, account.connector?.id, account.chainId, ethereumAddress])
 
-  const handleLoad = async (customAddress?: string) => {
-    const addressToLoad = customAddress || ethereumAddress.trim()
-    
-    if (!addressToLoad) {
-      setLoadError('Please enter a Safe address')
-      return
-    }
-
-    if (!account.address) {
-      setLoadError('Please connect your wallet first')
-      return
-    }
-
-    setLoading(true)
-    setLoadError(null)
-    setSafeInfo(null)
-    const provider = await account.connector?.getProvider()
-    try {
-      // Initialize the Protocol Kit with the existing Safe address
-      const protocolKit = await Safe.init({
-        provider: provider as Eip1193Provider,
-        signer: account.address,
-        safeAddress: addressToLoad
-      })
-
-      // Check if the Safe is deployed
-      const isDeployed = await protocolKit.isSafeDeployed()
-
-      if (!isDeployed) {
-        setLoadError('Safe not found at this address or not deployed')
-        return
-      }
-
-      // Get Safe information
-      const safeAddress = await protocolKit.getAddress()
-      const owners = await protocolKit.getOwners()
-      const threshold = await protocolKit.getThreshold()
-      const modules = await protocolKit.getModules()
-
-      setSafeInfo({
-        address: safeAddress,
-        owners,
-        threshold,
-        isDeployed,
-        modules
-      })
-
-      // Update the ethereumAddress state with the loaded address
-      if (customAddress) {
-        setEthereumAddress(safeAddress)
-        setIsAutoLoaded(true)
-      }
-    } catch (err) {
-      console.error('Error loading Safe:', err)
-      setLoadError(err instanceof Error ? err.message : 'Failed to load Safe')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Prevent hydration errors
   if (!mounted) {
@@ -306,20 +260,12 @@ function App() {
                       className={styles.input}
                       disabled={loading || !isConnectedToSepolia(account)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleLoad()}
-                      disabled={loading || !isConnectedToSepolia(account)}
-                      className={`${styles.loadButton} ${loading || !isConnectedToSepolia(account) ? styles.buttonDisabled : styles.buttonPrimary}`}
-                    >
-                      {!isConnectedToSepolia(account) ? 'Wrong Network' : loading ? 'Loading...' : 'Load Safe'}
-                    </button>
                   </div>
                 )}
 
                 {loadError && (
                   <div className={styles.errorMessage}>
-                    <strong>Error:</strong> {loadError}
+                    <strong>Error:</strong> {loadError instanceof Error ? loadError.message : 'Failed to load Safe'}
                   </div>
                 )}
               </div>
@@ -394,11 +340,17 @@ function App() {
                 recovererUniqueId={recovererUniqueId}
                 readError={readError}
                 readLoading={readLoading}
-                refetchRecoverer={() => { try { refetchRecoverer?.() } catch (_) {} }}
+                refetchRecoverer={() => { 
+                  console.log('🔄 Manual refetch: Triggering recoverer data refresh for Safe:', ethereumAddress)
+                  try { refetchRecoverer?.() } catch (_) {} 
+                }}
                 isConnectedAddressOwner={() => isConnectedAddressOwner(account, safeInfo)}
                 isSafeRegisteredForRecovery={() => isSafeRegisteredForRecovery(recovererUniqueId, readError, readLoading)}
                 isConnectedToSepolia={() => isConnectedToSepolia(account)}
-                handleLoad={handleLoad}
+                handleLoad={() => {
+                  console.log('🔄 Manual refetch: Triggering Safe info refresh for address:', ethereumAddress)
+                  refetchSafeInfo()
+                }}
                 onModuleAddressChange={setModuleAddress}
               />
             )}

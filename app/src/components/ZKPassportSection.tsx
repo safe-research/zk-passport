@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useQueryClient } from '@tanstack/react-query'
 import { ZKPassport, ProofResult } from "@zkpassport/sdk"
 import QRCode from "react-qr-code"
 import { encodeAbiParameters } from 'viem'
 import { isValidEthereumAddress } from '../utils/safeHelpers'
+import { getSafeInfoQueryKey } from '../hooks/useSafeInfo'
 import styles from './ZKPassportSection.module.css'
 import { ZK_MODULE_ADDRESS, WITNESS_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
-
-
 
 interface ZKPassportSectionProps {
   account: any
@@ -46,6 +46,7 @@ function ZKPassportSection({
   onModuleAddressChange
 }: ZKPassportSectionProps) {
   const { writeContract, data: hash, error: _writeError, isPending } = useWriteContract()
+  const queryClient = useQueryClient()
 
   // Track transaction status and refresh Safe info when confirmed
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
@@ -94,10 +95,15 @@ function ZKPassportSection({
 
       // Automatically refresh Safe information after successful transaction
       setTimeout(() => {
+        console.log('🔄 Query invalidation: Invalidating Safe info queries after transaction confirmation for Safe:', safeAddress)
+        queryClient.invalidateQueries({
+          queryKey: getSafeInfoQueryKey(safeAddress, account.address)
+        })
+        console.log('🔄 Query invalidation: Triggering manual handleLoad after transaction confirmation')
         handleLoad()
       }, 2000)
     }
-  }, [isConfirmed, handleLoad])
+  }, [isConfirmed, queryClient, safeAddress, account.address, handleLoad])
 
   const handleEnableModule = async () => {
     if (!account.address || !safeInfo) {
@@ -128,6 +134,7 @@ function ZKPassportSection({
         gas: 1000000n,
       })
 
+    console.log("enableModule tx:", hash)
 
     } catch (err) {
       console.error("Error enabling module:", err)
@@ -711,7 +718,7 @@ function ZKPassportSection({
                 <div className={styles.zkpassportStatusIndicator}></div>
                 <span>
                   {isPending && '⏳ Waiting for wallet signature...'}
-                  {isConfirming && '🔄 Confirming transaction on network...'}
+                  {isConfirming && '🔄 Confirming transaction on network...: ' + hash}
                   {isConfirmed && '✅ Transaction confirmed! Safe info will refresh shortly.'}
                 </span>
               </div>
