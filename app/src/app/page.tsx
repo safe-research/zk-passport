@@ -28,6 +28,7 @@ function App() {
   const [mounted, setMounted] = useState(false)
   const [recoveryType, setRecoveryType] = useState<'zkpassport' | 'candide'>('zkpassport')
   const [isAutoLoaded, setIsAutoLoaded] = useState(false)
+  const [moduleAddress, setModuleAddress] = useState(ZK_MODULE_ADDRESS)
 
   const [safeInfo, setSafeInfo] = useState<{
     address: string
@@ -39,7 +40,7 @@ function App() {
 
   // Read the safeToRecoverer mapping to check if Safe is registered for recovery
   const { data: recovererUniqueId, isError: readError, isLoading: readLoading, refetch: refetchRecoverer } = useReadContract({
-    address: ZK_MODULE_ADDRESS as `0x${string}`,
+    address: moduleAddress as `0x${string}`,
     abi: ZK_MODULE_ABI,
     functionName: 'safeToRecoverer',
     args: [ethereumAddress as `0x${string}`],
@@ -398,6 +399,7 @@ function App() {
                 isSafeRegisteredForRecovery={() => isSafeRegisteredForRecovery(recovererUniqueId, readError, readLoading)}
                 isConnectedToSepolia={() => isConnectedToSepolia(account)}
                 handleLoad={handleLoad}
+                onModuleAddressChange={setModuleAddress}
               />
             )}
 

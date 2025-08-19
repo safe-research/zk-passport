@@ -31,6 +31,7 @@ interface ZKPassportSectionProps {
   isSafeRegisteredForRecovery: () => boolean
   isConnectedToSepolia: () => boolean
   handleLoad: () => void
+  onModuleAddressChange?: (address: string) => void
 }
 
 function ZKPassportSection({
@@ -43,7 +44,8 @@ function ZKPassportSection({
   isSafeRegisteredForRecovery,
   isConnectedToSepolia,
   refetchRecoverer,
-  handleLoad
+  handleLoad,
+  onModuleAddressChange
 }: ZKPassportSectionProps) {
   const { writeContract, data: hash, error: _writeError, isPending } = useWriteContract()
 
@@ -79,6 +81,9 @@ function ZKPassportSection({
 
   // ZKPassport app setup verification
   const [hasZKPassportApp, setHasZKPassportApp] = useState(false)
+
+  // Custom module address
+  const [customModuleAddress, setCustomModuleAddress] = useState(ZK_MODULE_ADDRESS)
 
   // Track guardian registration transaction status  
   const {
@@ -168,42 +173,25 @@ function ZKPassportSection({
     setEnableModuleTxHash(undefined) // Reset previous tracking
 
     try {
-      const provider = await account.connector?.getProvider()
-      const protocolKit = await Safe.init({
-        provider: provider as Eip1193Provider,
-        signer: account.address,
-        safeAddress: safeAddress
+
+      await writeContract({
+        address: safeInfo.address,
+        abi: [
+          {
+            "inputs": [{ "internalType": "address", "name": "module", "type": "address" }],
+            "name": "enableModule",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+          }
+        ],
+        functionName: 'enableModule',
+        args: [
+          customModuleAddress,
+        ],
+        gas: 1000000n,
       })
 
-      // Create transaction to enable the module
-      const safeTransactionData: MetaTransactionData = {
-        to: safeInfo.address,
-        value: '0',
-        data: encodeFunctionData({
-          abi: [
-            {
-              "inputs": [{ "internalType": "address", "name": "module", "type": "address" }],
-              "name": "enableModule",
-              "outputs": [],
-              "stateMutability": "nonpayable",
-              "type": "function"
-            }
-          ],
-          functionName: "enableModule",
-          args: [ZK_MODULE_ADDRESS]
-        }),
-        operation: OperationType.Call
-      }
-
-      const transaction = await protocolKit.createTransaction({ transactions: [safeTransactionData] })
-
-      const executeTxResponse = await protocolKit.executeTransaction(transaction)
-      const txHash = executeTxResponse.hash
-
-      // Start tracking the enable module transaction
-      if (txHash) {
-        setEnableModuleTxHash(txHash as `0x${string}`)
-      }
 
     } catch (err) {
       console.error("Error enabling module:", err)
@@ -292,7 +280,7 @@ function ZKPassportSection({
 
       // Execute recovery transaction using wagmi with actual addresses
       await writeContract({
-        address: ZK_MODULE_ADDRESS as `0x${string}`,
+        address: customModuleAddress as `0x${string}`,
         abi: ZK_MODULE_ABI,
         functionName: 'register',
         args: [
@@ -410,7 +398,7 @@ function ZKPassportSection({
 
         // Execute recovery transaction using wagmi with actual addresses
         await writeContract({
-          address: ZK_MODULE_ADDRESS as `0x${string}`,
+          address: customModuleAddress as `0x${string}`,
           abi: ZK_MODULE_ABI,
           functionName: 'recover',
           // @ts-ignore - Type compatibility between ZKPassport SDK and wagmi
@@ -477,10 +465,10 @@ function ZKPassportSection({
         </p>
 
         {/* ZK Module Status Indicator moved from page.tsx */}
-        <div className={`${styles.zkpassportStatus} ${safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? styles.zkpassportStatusSuccess : styles.zkpassportStatusDisabled}`}>
+        <div className={`${styles.zkpassportStatus} ${safeInfo.modules.includes(customModuleAddress) ? styles.zkpassportStatusSuccess : styles.zkpassportStatusDisabled}`}>
           <div className={styles.zkpassportStatusIndicator}></div>
           <span>
-            ZK Recovery Module: {safeInfo.modules.includes(ZK_MODULE_ADDRESS) ? 'ENABLED' : 'DISABLED'}
+            ZK Recovery Module: {safeInfo.modules.includes(customModuleAddress) ? 'ENABLED' : 'DISABLED'}
           </span>
         </div>
 
@@ -536,8 +524,63 @@ function ZKPassportSection({
           </div>
         </div>
 
+        {/* Custom Module Address Configuration */}
+        <div className={styles.zkpassportCard}>
+          <h3 className={styles.zkpassportCardTitle}>
+            ⚙️ Module Configuration
+          </h3>
+          <p className={styles.zkpassportCardDescription}>
+            Configure the ZK Recovery Module address. Use the default address or provide a custom one for testing.
+          </p>
+          
+          <div className={styles.zkpassportInputGroup}>
+            <label className={styles.zkpassportInputLabel}>ZK Recovery Module Address:</label>
+            <input
+              type="text"
+              value={customModuleAddress}
+              onChange={(e) => {
+                const newAddress = e.target.value
+                setCustomModuleAddress(newAddress)
+                if (isValidEthereumAddress(newAddress) && onModuleAddressChange) {
+                  onModuleAddressChange(newAddress)
+                }
+              }}
+              placeholder="Enter module address (0x...)"
+              className={`${styles.zkpassportInput} ${customModuleAddress && !isValidEthereumAddress(customModuleAddress) ? styles.zkpassportInputInvalid : ''}`}
+            />
+            {customModuleAddress && !isValidEthereumAddress(customModuleAddress) && (
+              <p className={styles.zkpassportInputError}>Invalid address format. Must be 42 characters starting with 0x.</p>
+            )}
+            <p className={styles.zkpassportCardDescription} style={{ margin: '8px 0 0 0', fontSize: '12px' }}>
+              Default: {ZK_MODULE_ADDRESS}
+              {customModuleAddress !== ZK_MODULE_ADDRESS && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomModuleAddress(ZK_MODULE_ADDRESS)
+                    if (onModuleAddressChange) {
+                      onModuleAddressChange(ZK_MODULE_ADDRESS)
+                    }
+                  }}
+                  style={{ 
+                    marginLeft: '12px', 
+                    padding: '4px 8px', 
+                    fontSize: '11px', 
+                    background: '#f3f4f6', 
+                    border: '1px solid #d1d5db', 
+                    borderRadius: '4px', 
+                    cursor: 'pointer' 
+                  }}
+                >
+                  Reset to Default
+                </button>
+              )}
+            </p>
+          </div>
+        </div>
+
         {/* Enable Module Card - Only show if ZK module is NOT enabled */}
-        {mounted && !safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
+        {mounted && !safeInfo.modules.includes(customModuleAddress) && (
           <div className={styles.zkpassportCard}>
             <h3 className={styles.zkpassportCardTitle}>
               Enable ZK Recovery Module
@@ -600,7 +643,7 @@ function ZKPassportSection({
         )}
 
         {/* Guardian Registration Card - Only show if ZK module is enabled */}
-        {mounted && safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
+        {mounted && safeInfo.modules.includes(customModuleAddress) && (
           <div className={styles.zkpassportCard}>
             <h3 className={styles.zkpassportCardTitle}>Register Guardian</h3>
             <p className={styles.zkpassportCardDescription}>Verify your identity to register as a recovery guardian for this Safe (only one guardian per Safe for the PoC)</p>
@@ -689,7 +732,7 @@ function ZKPassportSection({
         )}
 
         {/* Recovery Section - Only show if ZK module is enabled AND a guardian has been registered for this Safe */}
-        {mounted && safeInfo.modules.includes(ZK_MODULE_ADDRESS) && isSafeRegisteredForRecovery() && (
+        {mounted && safeInfo.modules.includes(customModuleAddress) && isSafeRegisteredForRecovery() && (
           <div className={styles.zkpassportCard}>
             <h3 className={styles.zkpassportCardTitle}>Safe Recovery</h3>
             <p className={styles.zkpassportCardDescription}>This Safe is registered for recovery. Verify your identity to recover access.</p>
@@ -817,7 +860,7 @@ function ZKPassportSection({
         )}
 
         {/* Info message when module is enabled but no guardian is registered */}
-        {mounted && safeInfo.modules.includes(ZK_MODULE_ADDRESS) && !isSafeRegisteredForRecovery() && !readLoading && (
+        {mounted && safeInfo.modules.includes(customModuleAddress) && !isSafeRegisteredForRecovery() && !readLoading && (
           <div className={styles.zkpassportInfoCard}>
             <div className={styles.zkpassportInfoContent}>
               <div className={styles.zkpassportInfoIcon}>
