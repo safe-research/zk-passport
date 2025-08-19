@@ -39,6 +39,7 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
+          cache-dependency-path: 'app/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install
@@ -63,7 +64,7 @@ jobs:
         run: pnpm run build
         working-directory: ./app
         env:
-          PAGES_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.setup_pages.outputs.base_path }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

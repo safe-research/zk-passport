@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  images: {
+    unoptimized: true
+  },
   async headers() {
     return [
       // Allow manifest.json and other static files to be accessed cross-origin
