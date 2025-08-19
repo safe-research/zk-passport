@@ -67,7 +67,6 @@ function App() {
         isConnectedToSepolia(account) && 
         !safeInfo && 
         !loading) {
-      console.log('Auto-loading Safe information for Safe connector')
       handleLoad(account.address)
     }
   }, [account.status, account.address, account.connector?.id, account.chainId, safeInfo, loading])
@@ -124,14 +123,6 @@ function App() {
         setEthereumAddress(safeAddress)
         setIsAutoLoaded(true)
       }
-
-      console.log('Safe loaded successfully:', {
-        address: safeAddress,
-        owners,
-        threshold,
-        isDeployed
-      })
-
     } catch (err) {
       console.error('Error loading Safe:', err)
       setLoadError(err instanceof Error ? err.message : 'Failed to load Safe')
@@ -257,9 +248,6 @@ function App() {
                       </button>
                     ))}
                   </div>
-                  {status && (
-                    <p className={`${styles.cardDescription} ${styles.mt4}`}>{status}</p>
-                  )}
                   {error?.message && (
                     <p className={`${styles.errorMessage} ${styles.mt4}`}>{error.message}</p>
                   )}
@@ -389,8 +377,6 @@ function App() {
                     ))}
                   </div>
                 </div>
-
-                {/* ZK Module Status moved into ZKPassportSection */}
               </div>
 
             </div>

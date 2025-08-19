@@ -196,7 +196,6 @@ function ZKPassportSection({
 
       const executeTxResponse = await protocolKit.executeTransaction(transaction)
       const txHash = executeTxResponse.hash
-      console.log("Enable module transaction executed:", executeTxResponse)
 
       // Start tracking the enable module transaction
       if (txHash) {
@@ -239,49 +238,38 @@ function ZKPassportSection({
       abi,
     } = zkPassportRef.current.getSolidityVerifierDetails("ethereum_sepolia")
 
-    console.log(address, functionName, abi)
     const {
       url,
       onRequestReceived,
       onGeneratingProof,
       onProofGenerated,
       onResult,
-      onReject,
       onError,
     } = queryBuilder
       .bind('user_address', safeInfo!.address)
       .done()
 
     setQueryUrl(url)
-    console.log(url)
 
     setRequestInProgress(true)
 
     onRequestReceived(() => {
-      console.log("QR code scanned")
       setMessage("Request received")
     })
 
     onGeneratingProof(() => {
-      console.log("Generating proof")
       setMessage("Generating proof...")
     })
 
     let proof: ProofResult | undefined
 
     onProofGenerated((result: ProofResult) => {
-      console.log("Proof result", result)
       proof = result
       setMessage(`Proofs received`)
       setRequestInProgress(false)
     })
 
     onResult(async ({ result, uniqueIdentifier, verified, queryResultErrors }) => {
-      console.log("Result", result)
-      console.log("Unique identifier", uniqueIdentifier)
-      console.log("Verified", verified)
-      console.log("Query result errors", queryResultErrors)
-
 
       // Get verification parameters
       const verifierParams = zkPassportRef.current!.getSolidityVerifierParameters({
@@ -310,23 +298,9 @@ function ZKPassportSection({
         gas: 1000000n,
       })
 
-
-      // // Start tracking the guardian registration transaction
-      // if (txHash) {
-      //   setGuardianTxHash(txHash as `0x${string}`)
-      // }
-
-      console.log("Result of the query", result)
-      console.log("Query result errors", queryResultErrors)
       setMessage("Result received")
       setUniqueIdentifier(uniqueIdentifier || "")
       setVerified(verified)
-      setRequestInProgress(false)
-    })
-
-    onReject(() => {
-      console.log("User rejected")
-      setMessage("User rejected the request")
       setRequestInProgress(false)
     })
 
@@ -365,59 +339,41 @@ function ZKPassportSection({
       abi,
     } = zkPassportRef.current.getSolidityVerifierDetails("ethereum_sepolia")
 
-    console.log("Recovery verifier details:", address, functionName, abi)
+    const ownerIndex = safeInfo!.owners.indexOf(oldOwnerAddress)
+    const previousOwner = ownerIndex === 0 ? WITNESS_ADDRESS : safeInfo!.owners[ownerIndex - 1]
 
     const {
       url,
-      onRequestReceived,
       onGeneratingProof,
       onProofGenerated,
       onResult,
-      onReject,
       onError,
     } = queryBuilder
       .bind('user_address', newOwnerAddress)
       .bind('custom_data', encodeAbiParameters(
         [{ name: 'previousOwner', type: 'address' }, { name: 'oldOwner', type: 'address' }, { name: 'newOwner', type: 'address' }, { name: 'safeAddress', type: 'address' }],
-        [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
+        [previousOwner, oldOwnerAddress, newOwnerAddress, safeAddress]
       ))
       .done()
 
-    console.log(encodeAbiParameters(
-      [{ name: 'previousOwner', type: 'address' }, { name: 'oldOwner', type: 'address' }, { name: 'newOwner', type: 'address' }, { name: 'safeAddress', type: 'address' }],
-      [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
-    ))
-
     setRecoveryQueryUrl(url)
-    console.log("Recovery QR URL:", url)
 
     setRecoveryInProgress(true)
 
-    onRequestReceived(() => {
-      console.log("Recovery QR code scanned")
-      setRecoveryMessage("Recovery request received")
-    })
 
     onGeneratingProof(() => {
-      console.log("Generating recovery proof")
       setRecoveryMessage("Generating recovery proof...")
     })
 
     let recoveryProof: ProofResult | undefined
 
     onProofGenerated((result: ProofResult) => {
-      console.log("Recovery proof result", result)
       recoveryProof = result
       setRecoveryMessage("Recovery proof received")
       setRecoveryInProgress(false)
     })
 
     onResult(async ({ result, uniqueIdentifier, verified, queryResultErrors }) => {
-      console.log("Recovery result", result)
-      console.log("Recovery unique identifier", uniqueIdentifier)
-      console.log("Recovery verified", verified)
-      console.log("Recovery query result errors", queryResultErrors)
-
       // Get verification parameters for the recovery transaction
       const verifierParams = zkPassportRef.current!.getSolidityVerifierParameters({
         proof: recoveryProof!,
@@ -461,11 +417,9 @@ function ZKPassportSection({
           gas: 1000000n,
         })
 
-        console.log("Recovery transaction submitted successfully")
         setRecoveryMessage("Recovery transaction submitted - waiting for confirmation")
 
       } catch (err) {
-        console.error("Recovery transaction failed:", err)
         setRecoveryMessage("Recovery transaction failed: " + (err instanceof Error ? err.message : 'Unknown error'))
         setRecoveryInProgress(false)
         return
@@ -476,14 +430,7 @@ function ZKPassportSection({
       setRecoveryInProgress(false)
     })
 
-    onReject(() => {
-      console.log("Recovery request rejected")
-      setRecoveryMessage("Recovery request was rejected")
-      setRecoveryInProgress(false)
-    })
-
     onError((error: unknown) => {
-      console.error("Recovery error", error)
       setRecoveryMessage("An error occurred during recovery")
       setRecoveryInProgress(false)
     })
@@ -496,18 +443,11 @@ function ZKPassportSection({
     setMounted(true)
   }, [])
 
-  // Debug hydration issues
-  if (typeof window !== 'undefined' && !mounted) {
-    console.log('ZKPassportSection: Client-side, not yet mounted')
-  }
-
   if (!safeInfo) {
-    console.log('ZKPassportSection: No safeInfo available')
     return null
   }
 
   if (!mounted) {
-    console.log('ZKPassportSection: Not mounted yet, returning placeholder for SSR')
     // Return a placeholder with the same structure to prevent hydration mismatch
     return (
       <section className={styles.zkpassportSection}>
