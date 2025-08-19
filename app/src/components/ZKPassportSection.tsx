@@ -77,6 +77,9 @@ function ZKPassportSection({
   const [enableModuleMessage, setEnableModuleMessage] = useState("")
   const [enableModuleTxHash, setEnableModuleTxHash] = useState<`0x${string}` | undefined>(undefined)
 
+  // ZKPassport app setup verification
+  const [hasZKPassportApp, setHasZKPassportApp] = useState(false)
+
   // Track guardian registration transaction status  
   const {
     isLoading: isGuardianTxConfirming,
@@ -481,6 +484,58 @@ function ZKPassportSection({
           </span>
         </div>
 
+        {/* ZKPassport App Setup Verification */}
+        <div className={styles.zkpassportCard}>
+          <h3 className={styles.zkpassportCardTitle}>
+            📱 ZKPassport App Setup Required
+          </h3>
+          <p className={styles.zkpassportCardDescription}>
+            Before you can register a guardian or perform recovery, you need to set up the ZKPassport mobile app and load your identity.
+          </p>
+          
+          <div className={styles.zkpassportInfoCard}>
+            <div className={styles.zkpassportInfoContent}>
+              <p className={styles.zkpassportCardDescription}>
+                1. Download the ZKPassport app from{' '}
+                <a 
+                  href="https://zkpassport.id/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ color: '#3b82f6', textDecoration: 'underline', fontWeight: '500' }}
+                >
+                  zkpassport.id
+                </a>
+              </p>
+              <p className={styles.zkpassportCardDescription}>
+                2. Scan your ID document to load your identity
+              </p>
+              <p className={styles.zkpassportCardDescription}>
+                3. Verify the app is working by generating a test proof
+              </p>
+            </div>
+            
+            <div className={styles.zkpassportInputGroup}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={hasZKPassportApp}
+                  onChange={(e) => setHasZKPassportApp(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#10b981' }}
+                />
+                <span className={styles.zkpassportCardDescription} style={{ margin: 0 }}>
+                  ✅ I have set up the ZKPassport app and loaded my identity
+                </span>
+              </label>
+            </div>
+
+            {!hasZKPassportApp && (
+              <div className={styles.zkpassportError}>
+                <strong>⚠️ Setup Required:</strong> You must complete the ZKPassport app setup before proceeding with guardian registration or recovery operations.
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Enable Module Card - Only show if ZK module is NOT enabled */}
         {mounted && !safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
           <div className={styles.zkpassportCard}>
@@ -565,20 +620,29 @@ function ZKPassportSection({
                 <small>Please switch to Sepolia (Chain ID: 11155111) to continue.</small>
               </div>
             )}
+
+            {!hasZKPassportApp && (
+              <div className={styles.zkpassportError}>
+                <strong>⚠️ App Setup Required:</strong> Please complete the ZKPassport app setup above before registering a guardian.
+                <br />
+                <small>Check the box above to confirm you have set up the app and loaded your identity.</small>
+              </div>
+            )}
             
             <button
               type="button"
               onClick={handleCreateGuardian}
-              disabled={requestInProgress || isGuardianTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia()}
+              disabled={requestInProgress || isGuardianTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia() || !hasZKPassportApp}
               className={`${styles.zkpassportButton} ${
                 requestInProgress || isGuardianTxConfirming
                   ? styles.zkpassportButtonLoading
-                  : (!isConnectedAddressOwner() || !isConnectedToSepolia())
+                  : (!isConnectedAddressOwner() || !isConnectedToSepolia() || !hasZKPassportApp)
                   ? styles.zkpassportButtonError
                   : styles.zkpassportButtonPrimary
               }`}
             >
-              {!isConnectedToSepolia() ? 'Wrong Network' :
+              {!hasZKPassportApp ? 'Complete App Setup First' :
+               !isConnectedToSepolia() ? 'Wrong Network' :
                isGuardianTxConfirming ? 'Confirming Transaction...' :
                requestInProgress ? 'Processing...' : 
                !isConnectedAddressOwner() ? 'Owner Access Required' :
@@ -639,6 +703,14 @@ function ZKPassportSection({
               <p className={styles.zkpassportRecoveryStatusId}>ID: {recovererUniqueId}</p>
             </div>
 
+            {!hasZKPassportApp && (
+              <div className={styles.zkpassportError}>
+                <strong>⚠️ App Setup Required:</strong> Please complete the ZKPassport app setup above before starting recovery.
+                <br />
+                <small>Check the box above to confirm you have set up the app and loaded your identity.</small>
+              </div>
+            )}
+
             {/* Recovery Form */}
             <div className={styles.zkpassportInputGroup}>
               <div className={styles.zkpassportInputGroup}>
@@ -678,19 +750,20 @@ function ZKPassportSection({
               disabled={recoveryInProgress || isPending || isConfirming || readLoading || 
                        !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
                        !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
-                       !isConnectedToSepolia()}
+                       !isConnectedToSepolia() || !hasZKPassportApp}
               className={`${styles.zkpassportButton} ${
                 recoveryInProgress || isPending || isConfirming
                   ? styles.zkpassportButtonLoading
                   : (readLoading ||
                      !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
                      !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
-                     !isConnectedToSepolia())
+                     !isConnectedToSepolia() || !hasZKPassportApp)
                   ? styles.zkpassportButtonDisabled
                   : styles.zkpassportButtonPrimary
               }`}
             >
-              {!isConnectedToSepolia() ? 'Wrong Network' :
+              {!hasZKPassportApp ? 'Complete App Setup First' :
+               !isConnectedToSepolia() ? 'Wrong Network' :
                !oldOwnerAddress.trim() || !newOwnerAddress.trim() ? 'Enter Owner Addresses' :
                (oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress)) || (newOwnerAddress && !isValidEthereumAddress(newOwnerAddress)) ? 'Invalid Address Format' :
                isPending ? 'Sign Transaction in Wallet...' :
