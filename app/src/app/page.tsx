@@ -1,19 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAccount, useConnect, useDisconnect, useReadContract, useSwitchChain } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
 import ZKPassportSection from '../components/ZKPassportSection'
 import CandideZKPassportSection from '../components/CandideZKPassportSection'
 import {
-  isConnectedAddressOwner,
-  isSafeRegisteredForRecovery,
-  isConnectedToSepolia,
   getSepoliaChain,
   switchToSepolia,
   isSafeConnector
 } from '../utils/safeHelpers'
-import { ZK_MODULE_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
+import { ZK_MODULE_ADDRESS } from '../utils/constants'
 import { useSafeInfo } from '../hooks/useSafeInfo'
+import { useRecovererInfo } from '../hooks/useRecovererInfo'
+import { useSafeValidation } from '../hooks/useSafeValidation'
 import styles from './page.module.css'
 
 function App() {
@@ -36,28 +35,48 @@ function App() {
     refetch: refetchSafeInfo 
   } = useSafeInfo({ 
     safeAddress: ethereumAddress,
-    enabled: !!ethereumAddress && isConnectedToSepolia(account)
+    enabled: !!ethereumAddress && account.chainId === 11155111 // Sepolia chain ID
   })
 
   // Read the safeToRecoverer mapping to check if Safe is registered for recovery
-  const { data: recovererUniqueId, isError: readError, isLoading: readLoading, refetch: refetchRecoverer } = useReadContract({
-    address: moduleAddress as `0x${string}`,
-    abi: ZK_MODULE_ABI,
-    functionName: 'safeToRecoverer',
-    args: [ethereumAddress as `0x${string}`],
+  const { 
+    data: recovererUniqueId, 
+    isError: readError, 
+    isLoading: readLoading, 
+    refetch: refetchRecoverer 
+  } = useRecovererInfo({
+    moduleAddress,
+    safeAddress: ethereumAddress,
+    enabled: !!ethereumAddress
+  })
+
+  // Use validation hook for computed states
+  const {
+    isOwner,
+    isRegisteredForRecovery,
+    isOnSepolia,
+    isConnectedAddressOwner,
+    isSafeRegisteredForRecovery,
+    isConnectedToSepolia
+  } = useSafeValidation({
+    account,
+    safeInfo: safeInfo || null,
+    recovererUniqueId,
+    readError,
+    readLoading
   })
 
   // Log when recoverer data changes
   useEffect(() => {
     if (recovererUniqueId !== undefined) {
-      console.log('🔄 useReadContract: Recoverer data refreshed for Safe:', ethereumAddress, 'Data:', recovererUniqueId)
+      console.log('🔄 useRecovererInfo: Recoverer data refreshed for Safe:', ethereumAddress, 'Data:', recovererUniqueId)
     }
   }, [recovererUniqueId, ethereumAddress])
 
   // Log when recoverer data has errors
   useEffect(() => {
     if (readError) {
-      console.log('❌ useReadContract: Error refreshing recoverer data for Safe:', ethereumAddress)
+      console.log('❌ useRecovererInfo: Error refreshing recoverer data for Safe:', ethereumAddress)
     }
   }, [readError, ethereumAddress])
 
@@ -78,7 +97,7 @@ function App() {
     if (account.status === 'connected' && 
         account.address && 
         isSafeConnector(account) && 
-        isConnectedToSepolia(account) && 
+        isOnSepolia && 
         !ethereumAddress) {
       setEthereumAddress(account.address)
       setIsAutoLoaded(true)
@@ -149,7 +168,7 @@ function App() {
                   </div>
 
                   {/* Chain Warning - Show when not connected to Sepolia */}
-                  {!isConnectedToSepolia(account) && (
+                  {!isOnSepolia && (
                     <div className={styles.networkWarning}>
                       <div className={styles.networkWarningHeader}>
                         <div className={styles.statusDotRed}></div>
@@ -224,7 +243,7 @@ function App() {
                 </p>
 
                 {/* Network warning for Safe loading */}
-                {!isConnectedToSepolia(account) && (
+                {!isOnSepolia && (
                   <div className={styles.networkWarning}>
                     <p className={styles.networkWarningText}>
                       ⚠️ Safe loading is disabled. Please switch to Sepolia Testnet to continue.
@@ -244,11 +263,6 @@ function App() {
                         </p>
                       )}
                     </div>
-                    {!isConnectedToSepolia(account) && (
-                      <p className={styles.networkWarningText}>
-                        ⚠️ Please switch to Sepolia to load Safe information
-                      </p>
-                    )}
                   </div>
                 ) : (
                   <div className={styles.inputGroup}>
@@ -258,7 +272,7 @@ function App() {
                       onChange={(e) => setEthereumAddress(e.target.value)}
                       placeholder="Enter Safe address (0x...)"
                       className={styles.input}
-                      disabled={loading || !isConnectedToSepolia(account)}
+                      disabled={loading || !isOnSepolia}
                     />
                   </div>
                 )}
@@ -295,10 +309,10 @@ function App() {
                 </div>
 
                 {/* Wallet Status */}
-                <div className={`${styles.ownerStatus} ${isConnectedAddressOwner(account, safeInfo) ? styles.ownerStatusOwner : styles.ownerStatusNotOwner}`}>
-                  <div className={isConnectedAddressOwner(account, safeInfo) ? styles.statusDotGreen : styles.statusDotRed}></div>
-                  <span className={`${styles.ownerStatusText} ${isConnectedAddressOwner(account, safeInfo) ? styles.ownerStatusTextOwner : styles.ownerStatusTextNotOwner}`}>
-                    {isConnectedAddressOwner(account, safeInfo) ? 'SAFE OWNER' : 'NOT OWNER'}
+                <div className={`${styles.ownerStatus} ${isOwner ? styles.ownerStatusOwner : styles.ownerStatusNotOwner}`}>
+                  <div className={isOwner ? styles.statusDotGreen : styles.statusDotRed}></div>
+                  <span className={`${styles.ownerStatusText} ${isOwner ? styles.ownerStatusTextOwner : styles.ownerStatusTextNotOwner}`}>
+                    {isOwner ? 'SAFE OWNER' : 'NOT OWNER'}
                   </span>
                 </div>
 
@@ -344,9 +358,9 @@ function App() {
                   console.log('🔄 Manual refetch: Triggering recoverer data refresh for Safe:', ethereumAddress)
                   try { refetchRecoverer?.() } catch (_) {} 
                 }}
-                isConnectedAddressOwner={() => isConnectedAddressOwner(account, safeInfo)}
-                isSafeRegisteredForRecovery={() => isSafeRegisteredForRecovery(recovererUniqueId, readError, readLoading)}
-                isConnectedToSepolia={() => isConnectedToSepolia(account)}
+                isConnectedAddressOwner={isConnectedAddressOwner}
+                isSafeRegisteredForRecovery={isSafeRegisteredForRecovery}
+                isConnectedToSepolia={isConnectedToSepolia}
                 handleLoad={() => {
                   console.log('🔄 Manual refetch: Triggering Safe info refresh for address:', ethereumAddress)
                   refetchSafeInfo()

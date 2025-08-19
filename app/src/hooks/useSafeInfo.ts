@@ -62,7 +62,7 @@ export function useSafeInfo({ safeAddress, enabled = true }: UseSafeInfoParams) 
   return useQuery({
     queryKey: getSafeInfoQueryKey(safeAddress, account.address),
     queryFn: async () => {
-      console.log('🔄 useSafeInfo: Refreshing Safe data for address:', safeAddress)
+      console.log('🔄 useSafeInfo: Refreshing Safe data for address:', safeAddress, '(timestamp:', new Date().toLocaleTimeString(), ')')
       
       if (!account.address || !account.connector) {
         throw new Error('Wallet not connected')
@@ -79,6 +79,8 @@ export function useSafeInfo({ safeAddress, enabled = true }: UseSafeInfoParams) 
     },
     enabled: enabled && !!safeAddress && !!account.address && !!account.connector,
     staleTime: 10000, // Consider data fresh for 10 seconds
+    refetchInterval: 20000, // Automatically refetch every 20 seconds
+    refetchIntervalInBackground: true, // Continue refreshing even when tab is not focused
     retry: (failureCount, error) => {
       // Don't retry if Safe is not deployed or invalid address
       if (error.message.includes('Safe not found') || error.message.includes('not deployed')) {

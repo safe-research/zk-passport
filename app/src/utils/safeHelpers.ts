@@ -61,7 +61,14 @@ export const isSafeRegisteredForRecovery = (
  * Helper function to check if connected to Sepolia testnet
  */
 export const isConnectedToSepolia = (account: Account): boolean => {
-  return account.chainId === sepolia.id
+  const isOnSepolia = account.chainId === sepolia.id
+  console.log('🔍 isConnectedToSepolia check:', {
+    currentChainId: account.chainId,
+    sepoliaId: sepolia.id,
+    isMatch: isOnSepolia,
+    accountConnectorId: account.connector?.id
+  })
+  return isOnSepolia
 }
 
 /**
