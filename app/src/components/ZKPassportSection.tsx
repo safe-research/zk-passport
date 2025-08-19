@@ -38,7 +38,6 @@ function ZKPassportSection({
   safeInfo,
   safeAddress,
   recovererUniqueId,
-  readError,
   readLoading,
   isConnectedAddressOwner,
   isSafeRegisteredForRecovery,
@@ -46,50 +45,50 @@ function ZKPassportSection({
   refetchRecoverer,
   handleLoad
 }: ZKPassportSectionProps) {
-  const { writeContract, data: hash, error: writeError, isPending } = useWriteContract()
-  
+  const { writeContract, data: hash, error: _writeError, isPending } = useWriteContract()
+
   // Track transaction status and refresh Safe info when confirmed
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   })
-  
+
   const [message, setMessage] = useState("")
   const [queryUrl, setQueryUrl] = useState("")
   const [uniqueIdentifier, setUniqueIdentifier] = useState("")
   const [verified, setVerified] = useState<boolean | undefined>(undefined)
   const [requestInProgress, setRequestInProgress] = useState(false)
-  
+
   // Recovery-specific state variables
   const [recoveryMessage, setRecoveryMessage] = useState("")
   const [recoveryQueryUrl, setRecoveryQueryUrl] = useState("")
   const [recoveryUniqueIdentifier, setRecoveryUniqueIdentifier] = useState("")
   const [recoveryVerified, setRecoveryVerified] = useState<boolean | undefined>(undefined)
   const [recoveryInProgress, setRecoveryInProgress] = useState(false)
-  
+
   // Guardian registration transaction tracking
   const [guardianTxHash, setGuardianTxHash] = useState<`0x${string}` | undefined>(undefined)
-  
+
   // Recovery owner change addresses
   const [oldOwnerAddress, setOldOwnerAddress] = useState("")
   const [newOwnerAddress, setNewOwnerAddress] = useState("")
-  
+
   // Enable module state
   const [enableModuleLoading, setEnableModuleLoading] = useState(false)
   const [enableModuleMessage, setEnableModuleMessage] = useState("")
   const [enableModuleTxHash, setEnableModuleTxHash] = useState<`0x${string}` | undefined>(undefined)
-  
+
   // Track guardian registration transaction status  
-  const { 
-    isLoading: isGuardianTxConfirming, 
-    isSuccess: isGuardianTxConfirmed 
+  const {
+    isLoading: isGuardianTxConfirming,
+    isSuccess: isGuardianTxConfirmed
   } = useWaitForTransactionReceipt({
     hash: guardianTxHash,
   })
 
   // Track enable module transaction status
-  const { 
-    isLoading: isEnableModuleTxConfirming, 
-    isSuccess: isEnableModuleTxConfirmed 
+  const {
+    isLoading: isEnableModuleTxConfirming,
+    isSuccess: isEnableModuleTxConfirmed
   } = useWaitForTransactionReceipt({
     hash: enableModuleTxHash,
   })
@@ -107,7 +106,7 @@ function ZKPassportSection({
   useEffect(() => {
     if (isConfirmed) {
       setRecoveryInProgress(false)
-      
+
       // Automatically refresh Safe information after successful transaction
       setTimeout(() => {
         handleLoad()
@@ -119,11 +118,11 @@ function ZKPassportSection({
   useEffect(() => {
     if (isGuardianTxConfirmed) {
       setRequestInProgress(false)
-      
+
       // Automatically refresh Safe information after successful guardian registration
       setTimeout(() => {
         handleLoad()
-        try { refetchRecoverer && refetchRecoverer() } catch (_) {}
+        try { refetchRecoverer && refetchRecoverer() } catch (_) { }
       }, 2000)
     }
   }, [isGuardianTxConfirmed, handleLoad])
@@ -132,7 +131,7 @@ function ZKPassportSection({
   useEffect(() => {
     if (isEnableModuleTxConfirmed) {
       setEnableModuleLoading(false)
-      
+
       // Automatically refresh Safe information after successful module enablement
       setTimeout(() => {
         handleLoad()
@@ -161,12 +160,6 @@ function ZKPassportSection({
       return
     }
 
-    // Check if user is a Safe owner
-    if (!isConnectedAddressOwner()) {
-      setEnableModuleMessage("Error: Only Safe owners can enable modules")
-      return
-    }
-
     setEnableModuleLoading(true)
     setEnableModuleMessage("")
     setEnableModuleTxHash(undefined) // Reset previous tracking
@@ -186,7 +179,7 @@ function ZKPassportSection({
         data: encodeFunctionData({
           abi: [
             {
-              "inputs": [{"internalType": "address", "name": "module", "type": "address"}],
+              "inputs": [{ "internalType": "address", "name": "module", "type": "address" }],
               "name": "enableModule",
               "outputs": [],
               "stateMutability": "nonpayable",
@@ -199,17 +192,17 @@ function ZKPassportSection({
         operation: OperationType.Call
       }
 
-      const transaction = await protocolKit.createTransaction({transactions: [safeTransactionData]})
-      
+      const transaction = await protocolKit.createTransaction({ transactions: [safeTransactionData] })
+
       const executeTxResponse = await protocolKit.executeTransaction(transaction)
       const txHash = executeTxResponse.hash
       console.log("Enable module transaction executed:", executeTxResponse)
-      
+
       // Start tracking the enable module transaction
       if (txHash) {
         setEnableModuleTxHash(txHash as `0x${string}`)
       }
-      
+
     } catch (err) {
       console.error("Error enabling module:", err)
       setEnableModuleMessage("Error enabling module: " + (err instanceof Error ? err.message : 'Unknown error'))
@@ -222,13 +215,7 @@ function ZKPassportSection({
     if (!zkPassportRef.current) {
       return
     }
-    
-    // Check if connected address is a Safe owner before creating request
-    if (!isConnectedAddressOwner()) {
-      setMessage("Error: Only Safe owners can register modules")
-      return
-    }
-    
+
     setMessage("")
     setQueryUrl("")
     setUniqueIdentifier("")
@@ -262,8 +249,8 @@ function ZKPassportSection({
       onReject,
       onError,
     } = queryBuilder
-    .bind('user_address', safeInfo!.address)
-    .done()
+      .bind('user_address', safeInfo!.address)
+      .done()
 
     setQueryUrl(url)
     console.log(url)
@@ -295,20 +282,6 @@ function ZKPassportSection({
       console.log("Verified", verified)
       console.log("Query result errors", queryResultErrors)
 
-      // Check if connected address is a Safe owner before proceeding
-      if (!isConnectedAddressOwner()) {
-        console.error("Access denied: Only Safe owners can register modules")
-        setMessage("Error: Only Safe owners can register modules")
-        setRequestInProgress(false)
-        return
-      }
-
-      const provider = await account.connector?.getProvider()
-      const protocolKit = await Safe.init({
-        provider: provider as Eip1193Provider,
-        signer: account.address,
-        safeAddress: safeAddress
-      })
 
       // Get verification parameters
       const verifierParams = zkPassportRef.current!.getSolidityVerifierParameters({
@@ -316,29 +289,33 @@ function ZKPassportSection({
         devMode: false,
       })
 
-
-      const safeTransactionData: MetaTransactionData = {
-        to: ZK_MODULE_ADDRESS,
-        value: '0', // 1 wei
-        data: encodeFunctionData({
-          abi: ZK_MODULE_ABI,
-          functionName: "register",
-          // @ts-ignore-next-line
-          args: [verifierParams]
-        }),
-        operation: OperationType.Call
+      const wagmiVerifierParams = {
+        ...verifierParams,
+        vkeyHash: verifierParams.vkeyHash as `0x${string}`,
+        proof: verifierParams.proof as `0x${string}`,
+        publicInputs: verifierParams.publicInputs as `0x${string}`[],
+        committedInputs: verifierParams.committedInputs as `0x${string}`,
+        committedInputCounts: verifierParams.committedInputCounts.map((count: number) => BigInt(count)),
+        validityPeriodInDays: BigInt(verifierParams.validityPeriodInDays)
       }
 
-      const transaction = await protocolKit.createTransaction({transactions: [safeTransactionData]})
-      const executeTxResponse = await protocolKit.executeTransaction(transaction)
-      const txHash = executeTxResponse.hash
-      console.log("Execute transaction response", executeTxResponse)
-      
-      // Start tracking the guardian registration transaction
-      if (txHash) {
-        setGuardianTxHash(txHash as `0x${string}`)
-      }
-      
+      // Execute recovery transaction using wagmi with actual addresses
+      await writeContract({
+        address: ZK_MODULE_ADDRESS as `0x${string}`,
+        abi: ZK_MODULE_ABI,
+        functionName: 'register',
+        args: [
+          wagmiVerifierParams,
+        ],
+        gas: 1000000n,
+      })
+
+
+      // // Start tracking the guardian registration transaction
+      // if (txHash) {
+      //   setGuardianTxHash(txHash as `0x${string}`)
+      // }
+
       console.log("Result of the query", result)
       console.log("Query result errors", queryResultErrors)
       setMessage("Result received")
@@ -364,7 +341,7 @@ function ZKPassportSection({
     if (!zkPassportRef.current) {
       return
     }
-    
+
     // Reset recovery state
     setRecoveryMessage("")
     setRecoveryQueryUrl("")
@@ -389,7 +366,7 @@ function ZKPassportSection({
     } = zkPassportRef.current.getSolidityVerifierDetails("ethereum_sepolia")
 
     console.log("Recovery verifier details:", address, functionName, abi)
-    
+
     const {
       url,
       onRequestReceived,
@@ -401,15 +378,15 @@ function ZKPassportSection({
     } = queryBuilder
       .bind('user_address', newOwnerAddress)
       .bind('custom_data', encodeAbiParameters(
-       [{name: 'previousOwner', type: 'address'}, {name: 'oldOwner', type: 'address'}, {name: 'newOwner', type: 'address'}, {name: 'safeAddress', type: 'address'}],
-      [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
+        [{ name: 'previousOwner', type: 'address' }, { name: 'oldOwner', type: 'address' }, { name: 'newOwner', type: 'address' }, { name: 'safeAddress', type: 'address' }],
+        [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
       ))
       .done()
 
     console.log(encodeAbiParameters(
-      [{name: 'previousOwner', type: 'address'}, {name: 'oldOwner', type: 'address'}, {name: 'newOwner', type: 'address'}, {name: 'safeAddress', type: 'address'}],
-     [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
-     ))
+      [{ name: 'previousOwner', type: 'address' }, { name: 'oldOwner', type: 'address' }, { name: 'newOwner', type: 'address' }, { name: 'safeAddress', type: 'address' }],
+      [WITNESS_ADDRESS, oldOwnerAddress, newOwnerAddress, safeAddress]
+    ))
 
     setRecoveryQueryUrl(url)
     console.log("Recovery QR URL:", url)
@@ -481,11 +458,12 @@ function ZKPassportSection({
           args: [
             wagmiVerifierParams,
           ],
+          gas: 1000000n,
         })
 
         console.log("Recovery transaction submitted successfully")
         setRecoveryMessage("Recovery transaction submitted - waiting for confirmation")
-        
+
       } catch (err) {
         console.error("Recovery transaction failed:", err)
         setRecoveryMessage("Recovery transaction failed: " + (err instanceof Error ? err.message : 'Unknown error'))
@@ -513,7 +491,7 @@ function ZKPassportSection({
 
   // Prevent hydration errors by ensuring consistent rendering
   const [mounted, setMounted] = useState(false)
-  
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -711,7 +689,7 @@ function ZKPassportSection({
           <div className={styles.zkpassportCard}>
             <h3 className={styles.zkpassportCardTitle}>Safe Recovery</h3>
             <p className={styles.zkpassportCardDescription}>This Safe is registered for recovery. Verify your identity to recover access.</p>
-            
+
             {/* Recovery Status */}
             <div className={styles.zkpassportRecoveryStatus}>
               <div className={styles.zkpassportRecoveryStatusHeader}>
