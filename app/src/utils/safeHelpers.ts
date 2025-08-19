@@ -32,7 +32,7 @@ export const isConnectedAddressOwner = (
 ): boolean => {
   if (!account.address || !safeInfo) return false
   return safeInfo.owners.some(owner => 
-    owner.toLowerCase() === account.address!.toLowerCase()
+    owner.toLowerCase() === account.address!.toLowerCase() || safeInfo.address.toLowerCase() === account.address!.toLowerCase()
   )
 }
 
