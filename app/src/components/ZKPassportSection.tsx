@@ -1,12 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { ZKPassport, ProofResult } from "@zkpassport/sdk"
-import Safe, { Eip1193Provider } from '@safe-global/protocol-kit'
 import QRCode from "react-qr-code"
-import { MetaTransactionData, OperationType } from '@safe-global/types-kit'
-import { encodeAbiParameters, encodeFunctionData } from 'viem'
+import { encodeAbiParameters } from 'viem'
 import { isValidEthereumAddress } from '../utils/safeHelpers'
 import styles from './ZKPassportSection.module.css'
 import { ZK_MODULE_ADDRESS, WITNESS_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
@@ -54,7 +52,6 @@ function ZKPassportSection({
     hash,
   })
 
-  const [message, setMessage] = useState("")
   const [queryUrl, setQueryUrl] = useState("")
   const [uniqueIdentifier, setUniqueIdentifier] = useState("")
   const [verified, setVerified] = useState<boolean | undefined>(undefined)
@@ -67,9 +64,6 @@ function ZKPassportSection({
   const [recoveryVerified, setRecoveryVerified] = useState<boolean | undefined>(undefined)
   const [recoveryInProgress, setRecoveryInProgress] = useState(false)
 
-  // Guardian registration transaction tracking
-  const [guardianTxHash, setGuardianTxHash] = useState<`0x${string}` | undefined>(undefined)
-
   // Recovery owner change addresses
   const [oldOwnerAddress, setOldOwnerAddress] = useState("")
   const [newOwnerAddress, setNewOwnerAddress] = useState("")
@@ -77,29 +71,12 @@ function ZKPassportSection({
   // Enable module state
   const [enableModuleLoading, setEnableModuleLoading] = useState(false)
   const [enableModuleMessage, setEnableModuleMessage] = useState("")
-  const [enableModuleTxHash, setEnableModuleTxHash] = useState<`0x${string}` | undefined>(undefined)
 
   // ZKPassport app setup verification
   const [hasZKPassportApp, setHasZKPassportApp] = useState(false)
 
   // Custom module address
   const [customModuleAddress, setCustomModuleAddress] = useState(ZK_MODULE_ADDRESS)
-
-  // Track guardian registration transaction status  
-  const {
-    isLoading: isGuardianTxConfirming,
-    isSuccess: isGuardianTxConfirmed
-  } = useWaitForTransactionReceipt({
-    hash: guardianTxHash,
-  })
-
-  // Track enable module transaction status
-  const {
-    isLoading: isEnableModuleTxConfirming,
-    isSuccess: isEnableModuleTxConfirmed
-  } = useWaitForTransactionReceipt({
-    hash: enableModuleTxHash,
-  })
 
   const zkPassportRef = useRef<ZKPassport | null>(null)
 
@@ -122,46 +99,6 @@ function ZKPassportSection({
     }
   }, [isConfirmed, handleLoad])
 
-  // Monitor guardian registration transaction status
-  useEffect(() => {
-    if (isGuardianTxConfirmed) {
-      setRequestInProgress(false)
-
-      // Automatically refresh Safe information after successful guardian registration
-      setTimeout(() => {
-        handleLoad()
-        try { refetchRecoverer && refetchRecoverer() } catch (_) { }
-      }, 2000)
-    }
-  }, [isGuardianTxConfirmed, handleLoad])
-
-  // Monitor enable module transaction status
-  useEffect(() => {
-    if (isEnableModuleTxConfirmed) {
-      setEnableModuleLoading(false)
-
-      // Automatically refresh Safe information after successful module enablement
-      setTimeout(() => {
-        handleLoad()
-      }, 2000)
-    }
-  }, [isEnableModuleTxConfirmed, handleLoad])
-
-  // Derived status messages
-  const guardianTxMessage = useMemo(() => {
-    if (!guardianTxHash) return ''
-    if (isGuardianTxConfirming) return 'Guardian registration transaction confirming...'
-    if (isGuardianTxConfirmed) return 'Guardian registration confirmed successfully!'
-    return `Guardian registration transaction submitted! Hash: ${guardianTxHash}`
-  }, [guardianTxHash, isGuardianTxConfirming, isGuardianTxConfirmed])
-
-  const enableModuleTxMessage = useMemo(() => {
-    if (!enableModuleTxHash) return ''
-    if (isEnableModuleTxConfirming) return 'Enable module transaction confirming...'
-    if (isEnableModuleTxConfirmed) return 'ZK Module enabled successfully!'
-    return `Enable module transaction submitted! Hash: ${enableModuleTxHash}`
-  }, [enableModuleTxHash, isEnableModuleTxConfirming, isEnableModuleTxConfirmed])
-
   const handleEnableModule = async () => {
     if (!account.address || !safeInfo) {
       setEnableModuleMessage("Error: No wallet connected or Safe not loaded")
@@ -170,7 +107,6 @@ function ZKPassportSection({
 
     setEnableModuleLoading(true)
     setEnableModuleMessage("")
-    setEnableModuleTxHash(undefined) // Reset previous tracking
 
     try {
 
@@ -206,11 +142,9 @@ function ZKPassportSection({
       return
     }
 
-    setMessage("")
     setQueryUrl("")
     setUniqueIdentifier("")
     setVerified(undefined)
-    setGuardianTxHash(undefined) // Reset previous transaction tracking
 
     const queryBuilder = await zkPassportRef.current.request({
       name: "ZKPassport",
@@ -221,18 +155,7 @@ function ZKPassportSection({
     })
 
     const {
-      // The address of the deployed verifier contract
-      address,
-      // The function name to call on the verifier contract
-      functionName,
-      // The ABI of the verifier contract
-      abi,
-    } = zkPassportRef.current.getSolidityVerifierDetails("ethereum_sepolia")
-
-    const {
       url,
-      onRequestReceived,
-      onGeneratingProof,
       onProofGenerated,
       onResult,
       onError,
@@ -244,19 +167,10 @@ function ZKPassportSection({
 
     setRequestInProgress(true)
 
-    onRequestReceived(() => {
-      setMessage("Request received")
-    })
-
-    onGeneratingProof(() => {
-      setMessage("Generating proof...")
-    })
-
     let proof: ProofResult | undefined
 
     onProofGenerated((result: ProofResult) => {
       proof = result
-      setMessage(`Proofs received`)
       setRequestInProgress(false)
     })
 
@@ -289,15 +203,12 @@ function ZKPassportSection({
         gas: 1000000n,
       })
 
-      setMessage("Result received")
       setUniqueIdentifier(uniqueIdentifier || "")
       setVerified(verified)
       setRequestInProgress(false)
     })
 
     onError((error: unknown) => {
-      console.error("Error", error)
-      setMessage("An error occurred")
       setRequestInProgress(false)
     })
   }
@@ -320,15 +231,6 @@ function ZKPassportSection({
       mode: "compressed-evm",
       devMode: false,
     })
-
-    const {
-      // The address of the deployed verifier contract
-      address,
-      // The function name to call on the verifier contract
-      functionName,
-      // The ABI of the verifier contract
-      abi,
-    } = zkPassportRef.current.getSolidityVerifierDetails("ethereum_sepolia")
 
     const ownerIndex = safeInfo!.owners.indexOf(oldOwnerAddress)
     const previousOwner = ownerIndex === 0 ? WITNESS_ADDRESS : safeInfo!.owners[ownerIndex - 1]
@@ -608,9 +510,9 @@ function ZKPassportSection({
             <button
               type="button"
               onClick={handleEnableModule}
-              disabled={enableModuleLoading || isEnableModuleTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia()}
+              disabled={enableModuleLoading || !isConnectedAddressOwner() || !isConnectedToSepolia()}
               className={`${styles.zkpassportButton} ${
-                enableModuleLoading || isEnableModuleTxConfirming 
+                enableModuleLoading
                   ? styles.zkpassportButtonLoading
                   : !isConnectedToSepolia() || !isConnectedAddressOwner()
                   ? styles.zkpassportButtonError 
@@ -618,27 +520,16 @@ function ZKPassportSection({
               }`}
             >
               {!isConnectedToSepolia() ? 'Wrong Network' :
-               isEnableModuleTxConfirming ? 'Confirming Transaction...' :
                enableModuleLoading ? 'Enabling Module...' : 
                !isConnectedAddressOwner() ? 'Owner Access Required' : 'Enable ZK Recovery Module'}
             </button>
 
-            {(enableModuleMessage || enableModuleTxMessage) && (
+            {enableModuleMessage  && (
               <div className={`${styles.zkpassportMessage} ${enableModuleMessage.includes('Error') ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
-                {enableModuleMessage || enableModuleTxMessage}
+                {enableModuleMessage}
               </div>
             )}
 
-            {/* Enable Module Transaction Status Indicator */}
-            {(enableModuleTxHash && (isEnableModuleTxConfirming || isEnableModuleTxConfirmed)) && (
-              <div className={`${styles.zkpassportStatus} ${isEnableModuleTxConfirmed ? styles.zkpassportStatusSuccess : styles.zkpassportStatusPending}`}>
-                <div className={styles.zkpassportStatusIndicator}></div>
-                <span>
-                  {isEnableModuleTxConfirming && '🔄 Confirming module activation on network...'}
-                  {isEnableModuleTxConfirmed && '✅ Module activation confirmed! Safe info will refresh shortly.'}
-                </span>
-              </div>
-            )}
           </div>
         )}
 
@@ -675,9 +566,9 @@ function ZKPassportSection({
             <button
               type="button"
               onClick={handleCreateGuardian}
-              disabled={requestInProgress || isGuardianTxConfirming || !isConnectedAddressOwner() || !isConnectedToSepolia() || !hasZKPassportApp}
+              disabled={requestInProgress || !isConnectedAddressOwner() || !isConnectedToSepolia() || !hasZKPassportApp}
               className={`${styles.zkpassportButton} ${
-                requestInProgress || isGuardianTxConfirming
+                requestInProgress
                   ? styles.zkpassportButtonLoading
                   : (!isConnectedAddressOwner() || !isConnectedToSepolia() || !hasZKPassportApp)
                   ? styles.zkpassportButtonError
@@ -686,7 +577,6 @@ function ZKPassportSection({
             >
               {!hasZKPassportApp ? 'Complete App Setup First' :
                !isConnectedToSepolia() ? 'Wrong Network' :
-               isGuardianTxConfirming ? 'Confirming Transaction...' :
                requestInProgress ? 'Processing...' : 
                !isConnectedAddressOwner() ? 'Owner Access Required' :
                queryUrl ? 'Generate New Request' : 'Generate Verification Request'}
@@ -699,22 +589,6 @@ function ZKPassportSection({
               </div>
             )}
 
-            {(message || guardianTxMessage) && (
-              <div className={`${styles.zkpassportMessage} ${message.includes('Error') ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
-                {message || guardianTxMessage}
-              </div>
-            )}
-
-            {/* Guardian Transaction Status Indicator */}
-            {(guardianTxHash && (isGuardianTxConfirming || isGuardianTxConfirmed)) && (
-              <div className={`${styles.zkpassportStatus} ${isGuardianTxConfirmed ? styles.zkpassportStatusSuccess : styles.zkpassportStatusPending}`}>
-                <div className={styles.zkpassportStatusIndicator}></div>
-                <span>
-                  {isGuardianTxConfirming && '🔄 Confirming guardian registration on network...'}
-                  {isGuardianTxConfirmed && '✅ Guardian registration confirmed! Safe info will refresh shortly.'}
-                </span>
-              </div>
-            )}
 
             {uniqueIdentifier && (
               <div className={styles.zkpassportIdentifier}>
