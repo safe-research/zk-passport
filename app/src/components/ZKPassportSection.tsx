@@ -548,7 +548,7 @@ function ZKPassportSection({
         {mounted && safeInfo.modules.includes(ZK_MODULE_ADDRESS) && (
           <div className={styles.zkpassportCard}>
             <h3 className={styles.zkpassportCardTitle}>Register Guardian</h3>
-            <p className={styles.zkpassportCardDescription}>Verify your identity to register as a recovery guardian for this Safe</p>
+            <p className={styles.zkpassportCardDescription}>Verify your identity to register as a recovery guardian for this Safe (only one guardian per Safe for the PoC)</p>
             
             {!isConnectedAddressOwner() && (
               <div className={styles.zkpassportError}>
