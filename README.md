@@ -1,5 +1,8 @@
 # ZK Passport Safe Recovery - Identity Verification with Zero-Knowledge Proofs
 
+> [!WARNING]
+> Code in this repository is not audited and may contain serious security holes. Use at your own risk.
+
 A comprehensive project demonstrating how to build a decentralized identity verification system using [ZK Passport](https://zkpassport.id/). This project showcases the integration of zero-knowledge proof-based passport verification in a Next.js application with Safe wallet recovery functionality on the Sepolia testnet.
 
 ## 🎯 Project Overview
