@@ -1,21 +1,108 @@
-:root {
-  background-color: #181818;
-  color: rgba(255, 255, 255, 0.87);
-  color-scheme: light dark;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-synthesis: none;
-  font-weight: 400;
-  line-height: 1.5;
-  text-rendering: optimizeLegibility;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+/* Global Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    background-color: #f8f8f8;
-    color: #181818;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
+  color: #1e293b;
+  line-height: 1.5;
+}
+
+/* Ensure proper stacking and visibility */
+#__next {
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* Remove default button styles */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Input styles */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Link styles */
+a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Code styles */
+code {
+  font-family: 'Courier New', monospace;
+  background-color: #f1f5f9;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+/* Utility classes for better visibility */
+.text-visible {
+  color: #1e293b !important;
+}
+
+.bg-visible {
+  background-color: white !important;
+}
+
+.border-visible {
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Force visibility for debugging */
+.debug-visible {
+  background-color: #fef2f2 !important;
+  border: 2px solid #ef4444 !important;
+  color: #991b1b !important;
+  padding: 8px !important;
+}
+
+/* Ensure all text is readable */
+p, span, div, h1, h2, h3, h4, h5, h6 {
+  color: inherit;
+}
+
+/* Fix any potential CSS reset issues */
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Safe defaults for all interactive elements */
+button, input, select, textarea {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #1e293b;
+}
+
+button:disabled {
+  opacity: 0.6;
 }

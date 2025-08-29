@@ -3,6 +3,10 @@ cache/
 artifacts/
 typechain-types/
 
+# TypeScript build files
+dist/
+*.tsbuildinfo
+
 # Node modules
 node_modules/
 

@@ -3,14 +3,18 @@
 /* Layout */
 .pageContainer {
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: #f8fafc !important;
   padding: 20px 0;
+  position: relative;
+  z-index: 1;
 }
 
 .mainContainer {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Header */
@@ -22,13 +26,13 @@
 .headerTitle {
   font-size: 32px;
   font-weight: bold;
-  color: #1e293b;
+  color: #1e293b !important;
   margin-bottom: 8px;
 }
 
 .headerDescription {
   font-size: 18px;
-  color: #64748b;
+  color: #64748b !important;
   max-width: 600px;
   margin: 0 auto;
 }
@@ -50,11 +54,14 @@
 
 /* Cards */
 .card {
-  background-color: white;
+  background-color: white !important;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  z-index: 1;
 }
 
 .cardLast {
@@ -64,7 +71,7 @@
 .cardTitle {
   font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: #1e293b !important;
   margin-bottom: 16px;
 }
 
@@ -75,7 +82,7 @@
 }
 
 .cardDescription {
-  color: #64748b;
+  color: #64748b !important;
   margin-bottom: 16px;
   font-size: 14px;
 }
@@ -436,4 +443,24 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Auto Load Info */
+.autoLoadInfo {
+  margin-bottom: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .gridDouble {
+    grid-template-columns: 1fr;
+  }
+  
+  .headerTitle {
+    font-size: 24px;
+  }
+  
+  .mainContainer {
+    padding: 0 12px;
+  }
 }

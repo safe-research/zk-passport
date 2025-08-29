@@ -1,15 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { useQueryClient } from '@tanstack/react-query'
-import { ZKPassport, ProofResult } from "@zkpassport/sdk"
-import QRCode from "react-qr-code"
-import { encodeAbiParameters } from 'viem'
-import { isValidEthereumAddress } from '../utils/safeHelpers'
-import { getSafeInfoQueryKey } from '../hooks/useSafeInfo'
+import { useEffect, useState } from 'react'
+import { useZKPassportFlow } from '../hooks/useZKPassportFlow'
+import { ZK_MODULE_ADDRESS } from '../utils/constants'
+import FlowStepIndicator from './FlowStepIndicator'
+import ModuleSetupStep from './ModuleSetupStep'
+import GuardianRegistrationStep from './GuardianRegistrationStep'
+import RecoveryStep from './RecoveryStep'
 import styles from './ZKPassportSection.module.css'
-import { ZK_MODULE_ADDRESS, WITNESS_ADDRESS, ZK_MODULE_ABI } from '../utils/constants'
 
 interface ZKPassportSectionProps {
   account: any
@@ -45,349 +43,95 @@ function ZKPassportSection({
   handleLoad,
   onModuleAddressChange
 }: ZKPassportSectionProps) {
-  const { writeContract, data: hash, error: _writeError, isPending } = useWriteContract()
-  const queryClient = useQueryClient()
-
-  // Track transaction status and refresh Safe info when confirmed
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  })
-
-  const [queryUrl, setQueryUrl] = useState("")
-  const [uniqueIdentifier, setUniqueIdentifier] = useState("")
-  const [verified, setVerified] = useState<boolean | undefined>(undefined)
-  const [requestInProgress, setRequestInProgress] = useState(false)
-
-  // Recovery-specific state variables
-  const [recoveryMessage, setRecoveryMessage] = useState("")
-  const [recoveryQueryUrl, setRecoveryQueryUrl] = useState("")
-  const [recoveryUniqueIdentifier, setRecoveryUniqueIdentifier] = useState("")
-  const [recoveryVerified, setRecoveryVerified] = useState<boolean | undefined>(undefined)
-  const [recoveryInProgress, setRecoveryInProgress] = useState(false)
-
-  // Recovery owner change addresses
-  const [oldOwnerAddress, setOldOwnerAddress] = useState("")
-  const [newOwnerAddress, setNewOwnerAddress] = useState("")
-
-  // Enable module state
-  const [enableModuleLoading, setEnableModuleLoading] = useState(false)
-  const [enableModuleMessage, setEnableModuleMessage] = useState("")
-
   // ZKPassport app setup verification
   const [hasZKPassportApp, setHasZKPassportApp] = useState(false)
-
   // Custom module address
   const [customModuleAddress, setCustomModuleAddress] = useState(ZK_MODULE_ADDRESS)
-
-  const zkPassportRef = useRef<ZKPassport | null>(null)
-
-
-
-  useEffect(() => {
-    if (!zkPassportRef.current) {
-      zkPassportRef.current = new ZKPassport()
-    }
-  }, [])
-
-  useEffect(() => {
-    if (isConfirmed) {
-      setRecoveryInProgress(false)
-
-      // Automatically refresh Safe information after successful transaction
-      setTimeout(() => {
-        console.log('🔄 Query invalidation: Invalidating Safe info queries after transaction confirmation for Safe:', safeAddress)
-        queryClient.invalidateQueries({
-          queryKey: getSafeInfoQueryKey(safeAddress, account.address)
-        })
-        console.log('🔄 Query invalidation: Triggering manual handleLoad after transaction confirmation')
-        handleLoad()
-      }, 2000)
-    }
-  }, [isConfirmed, queryClient, safeAddress, account.address, handleLoad])
-
-  const handleEnableModule = async () => {
-    if (!account.address || !safeInfo) {
-      setEnableModuleMessage("Error: No wallet connected or Safe not loaded")
-      return
-    }
-
-    setEnableModuleLoading(true)
-    setEnableModuleMessage("")
-
-    try {
-
-      await writeContract({
-        address: safeInfo.address,
-        abi: [
-          {
-            "inputs": [{ "internalType": "address", "name": "module", "type": "address" }],
-            "name": "enableModule",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-          }
-        ],
-        functionName: 'enableModule',
-        args: [
-          customModuleAddress,
-        ],
-        gas: 1000000n,
-      })
-
-    console.log("enableModule tx:", hash)
-
-    } catch (err) {
-      console.error("Error enabling module:", err)
-      setEnableModuleMessage("Error enabling module: " + (err instanceof Error ? err.message : 'Unknown error'))
-    } finally {
-      setEnableModuleLoading(false)
-    }
-  }
-
-  const handleCreateGuardian = async () => {
-    if (!zkPassportRef.current) {
-      return
-    }
-
-    setQueryUrl("")
-    setUniqueIdentifier("")
-    setVerified(undefined)
-
-    const queryBuilder = await zkPassportRef.current.request({
-      name: "ZKPassport",
-      logo: "https://zkpassport.id/favicon.png",
-      purpose: "Proof of humanhood",
-      mode: "compressed-evm",
-      devMode: false,
-    })
-
-    const {
-      url,
-      onProofGenerated,
-      onResult,
-      onError,
-    } = queryBuilder
-      .bind('user_address', safeInfo!.address)
-      .done()
-
-    setQueryUrl(url)
-
-    setRequestInProgress(true)
-
-    let proof: ProofResult | undefined
-
-    onProofGenerated((result: ProofResult) => {
-      proof = result
-      setRequestInProgress(false)
-    })
-
-    onResult(async ({ result, uniqueIdentifier, verified, queryResultErrors }) => {
-
-      // Get verification parameters
-      const verifierParams = zkPassportRef.current!.getSolidityVerifierParameters({
-        proof: proof!,
-        devMode: false,
-      })
-
-      const wagmiVerifierParams = {
-        ...verifierParams,
-        vkeyHash: verifierParams.vkeyHash as `0x${string}`,
-        proof: verifierParams.proof as `0x${string}`,
-        publicInputs: verifierParams.publicInputs as `0x${string}`[],
-        committedInputs: verifierParams.committedInputs as `0x${string}`,
-        committedInputCounts: verifierParams.committedInputCounts.map((count: number) => BigInt(count)),
-        validityPeriodInDays: BigInt(verifierParams.validityPeriodInDays)
-      }
-
-      // Execute recovery transaction using wagmi with actual addresses
-      await writeContract({
-        address: customModuleAddress as `0x${string}`,
-        abi: ZK_MODULE_ABI,
-        functionName: 'register',
-        args: [
-          wagmiVerifierParams,
-        ],
-        gas: 1000000n,
-      })
-
-      setUniqueIdentifier(uniqueIdentifier || "")
-      setVerified(verified)
-      setRequestInProgress(false)
-    })
-
-    onError((error: unknown) => {
-      setRequestInProgress(false)
-    })
-  }
-
-  const handleRecovery = async () => {
-    if (!zkPassportRef.current) {
-      return
-    }
-
-    // Reset recovery state
-    setRecoveryMessage("")
-    setRecoveryQueryUrl("")
-    setRecoveryUniqueIdentifier("")
-    setRecoveryVerified(undefined)
-
-    const queryBuilder = await zkPassportRef.current.request({
-      name: "ZKPassport",
-      logo: "https://zkpassport.id/favicon.png",
-      purpose: "Safe Recovery - Verify your identity to recover access",
-      mode: "compressed-evm",
-      devMode: false,
-    })
-
-    const ownerIndex = safeInfo!.owners.indexOf(oldOwnerAddress)
-    const previousOwner = ownerIndex === 0 ? WITNESS_ADDRESS : safeInfo!.owners[ownerIndex - 1]
-
-    const {
-      url,
-      onGeneratingProof,
-      onProofGenerated,
-      onResult,
-      onError,
-    } = queryBuilder
-      .bind('user_address', newOwnerAddress)
-      .bind('custom_data', encodeAbiParameters(
-        [{ name: 'previousOwner', type: 'address' }, { name: 'oldOwner', type: 'address' }, { name: 'newOwner', type: 'address' }, { name: 'safeAddress', type: 'address' }],
-        [previousOwner, oldOwnerAddress, newOwnerAddress, safeAddress]
-      ))
-      .done()
-
-    setRecoveryQueryUrl(url)
-
-    setRecoveryInProgress(true)
-
-
-    onGeneratingProof(() => {
-      setRecoveryMessage("Generating recovery proof...")
-    })
-
-    let recoveryProof: ProofResult | undefined
-
-    onProofGenerated((result: ProofResult) => {
-      recoveryProof = result
-      setRecoveryMessage("Recovery proof received")
-      setRecoveryInProgress(false)
-    })
-
-    onResult(async ({ result, uniqueIdentifier, verified, queryResultErrors }) => {
-      // Get verification parameters for the recovery transaction
-      const verifierParams = zkPassportRef.current!.getSolidityVerifierParameters({
-        proof: recoveryProof!,
-        devMode: false,
-      })
-
-      // Convert parameters for wagmi compatibility
-      const wagmiVerifierParams = {
-        ...verifierParams,
-        vkeyHash: verifierParams.vkeyHash as `0x${string}`,
-        proof: verifierParams.proof as `0x${string}`,
-        publicInputs: verifierParams.publicInputs as `0x${string}`[],
-        committedInputs: verifierParams.committedInputs as `0x${string}`,
-        committedInputCounts: verifierParams.committedInputCounts.map((count: number) => BigInt(count)),
-        validityPeriodInDays: BigInt(verifierParams.validityPeriodInDays)
-      }
-
-      try {
-        // Validate addresses
-        if (!oldOwnerAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-          setRecoveryMessage("Error: Invalid current owner address format")
-          setRecoveryInProgress(false)
-          return
-        }
-
-        if (!newOwnerAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-          setRecoveryMessage("Error: Invalid new owner address format")
-          setRecoveryInProgress(false)
-          return
-        }
-
-        // Execute recovery transaction using wagmi with actual addresses
-        await writeContract({
-          address: customModuleAddress as `0x${string}`,
-          abi: ZK_MODULE_ABI,
-          functionName: 'recover',
-          // @ts-ignore - Type compatibility between ZKPassport SDK and wagmi
-          args: [
-            wagmiVerifierParams,
-          ],
-          gas: 1000000n,
-        })
-
-        setRecoveryMessage("Recovery transaction submitted - waiting for confirmation")
-
-      } catch (err) {
-        setRecoveryMessage("Recovery transaction failed: " + (err instanceof Error ? err.message : 'Unknown error'))
-        setRecoveryInProgress(false)
-        return
-      }
-
-      setRecoveryUniqueIdentifier(uniqueIdentifier || "")
-      setRecoveryVerified(verified)
-      setRecoveryInProgress(false)
-    })
-
-    onError((error: unknown) => {
-      setRecoveryMessage("An error occurred during recovery")
-      setRecoveryInProgress(false)
-    })
-  }
-
-  // Prevent hydration errors by ensuring consistent rendering
+  // Prevent hydration errors
   const [mounted, setMounted] = useState(false)
+
+  // ZK Passport flow hook
+  const {
+    guardianState,
+    createGuardianRegistration,
+    recoveryState,
+    createRecoveryRequest,
+    updateRecoveryAddresses,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    hash
+  } = useZKPassportFlow({
+    safeInfo,
+    safeAddress,
+    account,
+    customModuleAddress,
+    handleLoad
+  })
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  if (!safeInfo) {
-    return null
-  }
-
-  if (!mounted) {
-    // Return a placeholder with the same structure to prevent hydration mismatch
+  if (!safeInfo || !mounted) {
     return (
       <section className={styles.zkpassportSection}>
         <div className={styles.zkpassportContainer}>
-          <h2 className={styles.zkpassportTitle}>
-            ZK-Passport
-          </h2>
-          <p className={styles.zkpassportDescription}>
-            Loading...
-          </p>
+          <h2 className={styles.zkpassportTitle}>ZK-Passport</h2>
+          <p className={styles.zkpassportDescription}>Loading...</p>
         </div>
       </section>
     )
   }
 
+  const isModuleEnabled = safeInfo.modules.includes(customModuleAddress)
+  const isRegisteredForRecovery = isSafeRegisteredForRecovery()
+
+  // Calculate flow steps
+  const flowSteps: Array<{
+    id: string
+    title: string
+    description: string
+    status: 'pending' | 'current' | 'completed' | 'disabled'
+  }> = [
+    {
+      id: 'setup',
+      title: 'Module Setup',
+      description: 'Enable ZK Recovery Module',
+      status: isModuleEnabled ? 'completed' : (hasZKPassportApp && isConnectedToSepolia() && isConnectedAddressOwner()) ? 'current' : 'disabled'
+    },
+    {
+      id: 'guardian',
+      title: 'Guardian Registration',
+      description: 'Register identity as guardian',
+      status: isRegisteredForRecovery ? 'completed' : isModuleEnabled ? 'current' : 'pending'
+    },
+    {
+      id: 'recovery',
+      title: 'Recovery Ready',
+      description: 'Safe recovery available',
+      status: isRegisteredForRecovery ? 'completed' : isModuleEnabled ? 'pending' : 'disabled'
+    }
+  ]
+
   return (
     <section className={styles.zkpassportSection} suppressHydrationWarning>
       <div className={styles.zkpassportContainer} suppressHydrationWarning>
-        <h2 className={styles.zkpassportTitle}>
-          ZK-Passport
-        </h2>
+        <h2 className={styles.zkpassportTitle}>ZK-Passport Recovery System</h2>
         <p className={styles.zkpassportDescription}>
           Secure identity verification and recovery using Zero-Knowledge proofs
         </p>
 
-        {/* ZK Module Status Indicator moved from page.tsx */}
-        <div className={`${styles.zkpassportStatus} ${safeInfo.modules.includes(customModuleAddress) ? styles.zkpassportStatusSuccess : styles.zkpassportStatusDisabled}`}>
-          <div className={styles.zkpassportStatusIndicator}></div>
-          <span>
-            ZK Recovery Module: {safeInfo.modules.includes(customModuleAddress) ? 'ENABLED' : 'DISABLED'}
-          </span>
-        </div>
+        {/* Flow Progress Indicator */}
+        <FlowStepIndicator steps={flowSteps} />
 
         {/* ZKPassport App Setup Verification */}
         <div className={styles.zkpassportCard}>
           <h3 className={styles.zkpassportCardTitle}>
-            📱 ZKPassport App Setup Required
+            📱 Prerequisites: ZKPassport App Setup
           </h3>
           <p className={styles.zkpassportCardDescription}>
-            Before you can register a guardian or perform recovery, you need to set up the ZKPassport mobile app and load your identity.
+            Before proceeding, ensure you have the ZKPassport mobile app installed and your identity loaded.
           </p>
           
           <div className={styles.zkpassportInfoCard}>
@@ -427,338 +171,48 @@ function ZKPassportSection({
 
             {!hasZKPassportApp && (
               <div className={styles.zkpassportError}>
-                <strong>⚠️ Setup Required:</strong> You must complete the ZKPassport app setup before proceeding with guardian registration or recovery operations.
+                <strong>⚠️ Setup Required:</strong> Complete the ZKPassport app setup before proceeding.
               </div>
             )}
           </div>
         </div>
 
-        {/* Custom Module Address Configuration */}
-        <div className={styles.zkpassportCard}>
-          <h3 className={styles.zkpassportCardTitle}>
-            ⚙️ Module Configuration
-          </h3>
-          <p className={styles.zkpassportCardDescription}>
-            Configure the ZK Recovery Module address. Use the default address or provide a custom one for testing.
-          </p>
-          
-          <div className={styles.zkpassportInputGroup}>
-            <label className={styles.zkpassportInputLabel}>ZK Recovery Module Address:</label>
-            <input
-              type="text"
-              value={customModuleAddress}
-              onChange={(e) => {
-                const newAddress = e.target.value
-                setCustomModuleAddress(newAddress)
-                if (isValidEthereumAddress(newAddress) && onModuleAddressChange) {
-                  onModuleAddressChange(newAddress)
-                }
-              }}
-              placeholder="Enter module address (0x...)"
-              className={`${styles.zkpassportInput} ${customModuleAddress && !isValidEthereumAddress(customModuleAddress) ? styles.zkpassportInputInvalid : ''}`}
-            />
-            {customModuleAddress && !isValidEthereumAddress(customModuleAddress) && (
-              <p className={styles.zkpassportInputError}>Invalid address format. Must be 42 characters starting with 0x.</p>
-            )}
-            <p className={styles.zkpassportCardDescription} style={{ margin: '8px 0 0 0', fontSize: '12px' }}>
-              Default: {ZK_MODULE_ADDRESS}
-              {customModuleAddress !== ZK_MODULE_ADDRESS && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomModuleAddress(ZK_MODULE_ADDRESS)
-                    if (onModuleAddressChange) {
-                      onModuleAddressChange(ZK_MODULE_ADDRESS)
-                    }
-                  }}
-                  style={{ 
-                    marginLeft: '12px', 
-                    padding: '4px 8px', 
-                    fontSize: '11px', 
-                    background: '#f3f4f6', 
-                    border: '1px solid #d1d5db', 
-                    borderRadius: '4px', 
-                    cursor: 'pointer' 
-                  }}
-                >
-                  Reset to Default
-                </button>
-              )}
-            </p>
-          </div>
-        </div>
+        {/* Step 1: Module Setup */}
+        <ModuleSetupStep
+          safeInfo={safeInfo}
+          customModuleAddress={customModuleAddress}
+          setCustomModuleAddress={setCustomModuleAddress}
+          isConnectedAddressOwner={isConnectedAddressOwner}
+          isConnectedToSepolia={isConnectedToSepolia}
+          onModuleAddressChange={onModuleAddressChange}
+        />
 
-        {/* Enable Module Card - Only show if ZK module is NOT enabled */}
-        {mounted && !safeInfo.modules.includes(customModuleAddress) && (
-          <div className={styles.zkpassportCard}>
-            <h3 className={styles.zkpassportCardTitle}>
-              Enable ZK Recovery Module
-            </h3>
-            <p className={styles.zkpassportCardDescription}>
-              Enable the ZK Recovery Module on your Safe to use ZK-Passport features
-            </p>
-            
-            {!isConnectedAddressOwner() && (
-              <div className={styles.zkpassportError}>
-                <strong>⚠️ Access Denied:</strong> Only Safe owners can enable modules.
-                <br />
-                <small>Connect with an owner wallet address to continue.</small>
-              </div>
-            )}
+        {/* Step 2: Guardian Registration */}
+        <GuardianRegistrationStep
+          isModuleEnabled={isModuleEnabled}
+          isConnectedAddressOwner={isConnectedAddressOwner}
+          isConnectedToSepolia={isConnectedToSepolia}
+          hasZKPassportApp={hasZKPassportApp}
+          guardianState={guardianState}
+          onCreateGuardian={createGuardianRegistration}
+        />
 
-            {!isConnectedToSepolia() && (
-              <div className={styles.zkpassportError}>
-                <strong>⚠️ Wrong Network:</strong> Module enablement requires Sepolia Testnet.
-                <br />
-                <small>Please switch to Sepolia (Chain ID: 11155111) to continue.</small>
-              </div>
-            )}
-            
-            <button
-              type="button"
-              onClick={handleEnableModule}
-              disabled={enableModuleLoading || !isConnectedAddressOwner() || !isConnectedToSepolia()}
-              className={`${styles.zkpassportButton} ${
-                enableModuleLoading
-                  ? styles.zkpassportButtonLoading
-                  : !isConnectedToSepolia() || !isConnectedAddressOwner()
-                  ? styles.zkpassportButtonError 
-                  : styles.zkpassportButtonPrimary
-              }`}
-            >
-              {!isConnectedToSepolia() ? 'Wrong Network' :
-               enableModuleLoading ? 'Enabling Module...' : 
-               !isConnectedAddressOwner() ? 'Owner Access Required' : 'Enable ZK Recovery Module'}
-            </button>
-
-            {enableModuleMessage  && (
-              <div className={`${styles.zkpassportMessage} ${enableModuleMessage.includes('Error') ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
-                {enableModuleMessage}
-              </div>
-            )}
-
-          </div>
-        )}
-
-        {/* Guardian Registration Card - Only show if ZK module is enabled */}
-        {mounted && safeInfo.modules.includes(customModuleAddress) && (
-          <div className={styles.zkpassportCard}>
-            <h3 className={styles.zkpassportCardTitle}>Register Guardian</h3>
-            <p className={styles.zkpassportCardDescription}>Verify your identity to register as a recovery guardian for this Safe (only one guardian per Safe for the PoC)</p>
-            
-            {!isConnectedAddressOwner() && (
-              <div className={styles.zkpassportError}>
-                <strong>⚠️ Access Denied:</strong> Only Safe owners can register guardians.
-                <br />
-                <small>Connect with an owner wallet address to continue.</small>
-              </div>
-            )}
-
-            {!isConnectedToSepolia() && (
-              <div className={styles.zkpassportError}>
-                <strong>⚠️ Wrong Network:</strong> ZK-Passport requires Sepolia Testnet.
-                <br />
-                <small>Please switch to Sepolia (Chain ID: 11155111) to continue.</small>
-              </div>
-            )}
-
-            {!hasZKPassportApp && (
-              <div className={styles.zkpassportError}>
-                <strong>⚠️ App Setup Required:</strong> Please complete the ZKPassport app setup above before registering a guardian.
-                <br />
-                <small>Check the box above to confirm you have set up the app and loaded your identity.</small>
-              </div>
-            )}
-            
-            <button
-              type="button"
-              onClick={handleCreateGuardian}
-              disabled={requestInProgress || !isConnectedAddressOwner() || !isConnectedToSepolia() || !hasZKPassportApp}
-              className={`${styles.zkpassportButton} ${
-                requestInProgress
-                  ? styles.zkpassportButtonLoading
-                  : (!isConnectedAddressOwner() || !isConnectedToSepolia() || !hasZKPassportApp)
-                  ? styles.zkpassportButtonError
-                  : styles.zkpassportButtonPrimary
-              }`}
-            >
-              {!hasZKPassportApp ? 'Complete App Setup First' :
-               !isConnectedToSepolia() ? 'Wrong Network' :
-               requestInProgress ? 'Processing...' : 
-               !isConnectedAddressOwner() ? 'Owner Access Required' :
-               queryUrl ? 'Generate New Request' : 'Generate Verification Request'}
-            </button>
-
-            {queryUrl && (
-              <div className={styles.zkpassportQrContainer}>
-                <p className={styles.zkpassportQrText}>Scan with ZKPassport app:</p>
-                <QRCode value={queryUrl} size={200} />
-              </div>
-            )}
-
-
-            {uniqueIdentifier && (
-              <div className={styles.zkpassportIdentifier}>
-                <p className={styles.zkpassportIdentifierLabel}>Unique Identifier:</p>
-                <p className={styles.zkpassportIdentifierValue}>{uniqueIdentifier}</p>
-              </div>
-            )}
-
-            {verified !== undefined && (
-              <div className={`${styles.zkpassportMessage} ${verified ? styles.zkpassportStatusSuccess : styles.zkpassportMessageError}`}>
-                <strong>Verification Status:</strong> {verified ? '✅ Verified' : '❌ Failed'}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Recovery Section - Only show if ZK module is enabled AND a guardian has been registered for this Safe */}
-        {mounted && safeInfo.modules.includes(customModuleAddress) && isSafeRegisteredForRecovery() && (
-          <div className={styles.zkpassportCard}>
-            <h3 className={styles.zkpassportCardTitle}>Safe Recovery</h3>
-            <p className={styles.zkpassportCardDescription}>This Safe is registered for recovery. Verify your identity to recover access.</p>
-
-            {/* Recovery Status */}
-            <div className={styles.zkpassportRecoveryStatus}>
-              <div className={styles.zkpassportRecoveryStatusHeader}>
-                <div className={styles.zkpassportRecoveryStatusDot}></div>
-                <span className={styles.zkpassportRecoveryStatusLabel}>Recovery Available</span>
-              </div>
-              <p className={styles.zkpassportRecoveryStatusId}>ID: {recovererUniqueId}</p>
-            </div>
-
-            {!hasZKPassportApp && (
-              <div className={styles.zkpassportError}>
-                <strong>⚠️ App Setup Required:</strong> Please complete the ZKPassport app setup above before starting recovery.
-                <br />
-                <small>Check the box above to confirm you have set up the app and loaded your identity.</small>
-              </div>
-            )}
-
-            {/* Recovery Form */}
-            <div className={styles.zkpassportInputGroup}>
-              <div className={styles.zkpassportInputGroup}>
-                <label className={styles.zkpassportInputLabel}>Current Owner Address (to be replaced):</label>
-                <input
-                  type="text"
-                  value={oldOwnerAddress}
-                  onChange={(e) => setOldOwnerAddress(e.target.value)}
-                  placeholder="Enter current owner address (0x...)"
-                  className={`${styles.zkpassportInput} ${oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress) ? styles.zkpassportInputInvalid : ''}`}
-                  disabled={recoveryInProgress || isPending || isConfirming}
-                />
-                {oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress) && (
-                  <p className={styles.zkpassportInputError}>Invalid address format. Must be 42 characters starting with 0x.</p>
-                )}
-              </div>
-
-              <div className={styles.zkpassportInputGroup}>
-                <label className={styles.zkpassportInputLabel}>New Owner Address (replacement):</label>
-                <input
-                  type="text"
-                  value={newOwnerAddress}
-                  onChange={(e) => setNewOwnerAddress(e.target.value)}
-                  placeholder="Enter new owner address (0x...)"
-                  className={`${styles.zkpassportInput} ${newOwnerAddress && !isValidEthereumAddress(newOwnerAddress) ? styles.zkpassportInputInvalid : ''}`}
-                  disabled={recoveryInProgress || isPending || isConfirming}
-                />
-                {newOwnerAddress && !isValidEthereumAddress(newOwnerAddress) && (
-                  <p className={styles.zkpassportInputError}>Invalid address format. Must be 42 characters starting with 0x.</p>
-                )}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleRecovery}
-              disabled={recoveryInProgress || isPending || isConfirming || readLoading || 
-                       !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
-                       !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
-                       !isConnectedToSepolia() || !hasZKPassportApp}
-              className={`${styles.zkpassportButton} ${
-                recoveryInProgress || isPending || isConfirming
-                  ? styles.zkpassportButtonLoading
-                  : (readLoading ||
-                     !oldOwnerAddress.trim() || !newOwnerAddress.trim() ||
-                     !isValidEthereumAddress(oldOwnerAddress) || !isValidEthereumAddress(newOwnerAddress) ||
-                     !isConnectedToSepolia() || !hasZKPassportApp)
-                  ? styles.zkpassportButtonDisabled
-                  : styles.zkpassportButtonPrimary
-              }`}
-            >
-              {!hasZKPassportApp ? 'Complete App Setup First' :
-               !isConnectedToSepolia() ? 'Wrong Network' :
-               !oldOwnerAddress.trim() || !newOwnerAddress.trim() ? 'Enter Owner Addresses' :
-               (oldOwnerAddress && !isValidEthereumAddress(oldOwnerAddress)) || (newOwnerAddress && !isValidEthereumAddress(newOwnerAddress)) ? 'Invalid Address Format' :
-               isPending ? 'Sign Transaction in Wallet...' :
-               isConfirming ? 'Confirming Transaction...' :
-               recoveryInProgress ? 'Processing Recovery...' : 
-               readLoading ? 'Loading...' : 
-               recoveryQueryUrl ? 'Generate New Recovery Request' : 'Start Recovery Process'}
-            </button>
-
-            {/* Recovery QR Code */}
-            {recoveryQueryUrl && (
-              <div className={styles.zkpassportQrContainer}>
-                <p className={styles.zkpassportQrText}>Scan with ZKPassport app to verify your identity for recovery:</p>
-                <QRCode value={recoveryQueryUrl} size={200} />
-              </div>
-            )}
-
-            {/* Recovery Messages */}
-            {recoveryMessage && (
-              <div className={`${styles.zkpassportMessage} ${(recoveryMessage.includes('Error') || recoveryMessage.includes('failed')) ? styles.zkpassportMessageError : styles.zkpassportMessageInfo}`}>
-                {recoveryMessage}
-              </div>
-            )}
-
-            {/* Transaction Status Indicator */}
-            {(isPending || isConfirming || isConfirmed) && (
-              <div className={`${styles.zkpassportStatus} ${isConfirmed ? styles.zkpassportStatusSuccess : styles.zkpassportStatusPending}`}>
-                <div className={styles.zkpassportStatusIndicator}></div>
-                <span>
-                  {isPending && '⏳ Waiting for wallet signature...'}
-                  {isConfirming && '🔄 Confirming transaction on network...: ' + hash}
-                  {isConfirmed && '✅ Transaction confirmed! Safe info will refresh shortly.'}
-                </span>
-              </div>
-            )}
-
-            {/* Recovery Results */}
-            {recoveryUniqueIdentifier && (
-              <div className={styles.zkpassportIdentifier}>
-                <p className={styles.zkpassportIdentifierLabel}>Recovery Unique Identifier:</p>
-                <p className={styles.zkpassportIdentifierValue}>{recoveryUniqueIdentifier}</p>
-              </div>
-            )}
-
-            {recoveryVerified !== undefined && (
-              <div className={`${styles.zkpassportMessage} ${recoveryVerified ? styles.zkpassportStatusSuccess : styles.zkpassportMessageError}`}>
-                <strong>Recovery Verification Status:</strong> {recoveryVerified ? '✅ Verified' : '❌ Failed'}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Info message when module is enabled but no guardian is registered */}
-        {mounted && safeInfo.modules.includes(customModuleAddress) && !isSafeRegisteredForRecovery() && !readLoading && (
-          <div className={styles.zkpassportInfoCard}>
-            <div className={styles.zkpassportInfoContent}>
-              <div className={styles.zkpassportInfoIcon}>
-                🛡️
-              </div>
-              <h4 className={styles.zkpassportInfoTitle}>
-                No Recovery Guardian Set
-              </h4>
-              <p className={styles.zkpassportInfoDescription}>
-                Register a guardian above to enable Safe recovery functionality.
-              </p>
-              <p className={styles.zkpassportInfoNote}>
-                Once registered, you'll be able to recover access to this Safe using ZK identity verification.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Step 3: Recovery */}
+        <RecoveryStep
+          isModuleEnabled={isModuleEnabled}
+          isSafeRegisteredForRecovery={isSafeRegisteredForRecovery}
+          recovererUniqueId={recovererUniqueId}
+          readLoading={readLoading}
+          isConnectedToSepolia={isConnectedToSepolia}
+          hasZKPassportApp={hasZKPassportApp}
+          recoveryState={recoveryState}
+          onUpdateAddresses={updateRecoveryAddresses}
+          onCreateRecovery={createRecoveryRequest}
+          isPending={isPending}
+          isConfirming={isConfirming}
+          isConfirmed={isConfirmed}
+          hash={hash}
+        />
       </div>
     </section>
   )

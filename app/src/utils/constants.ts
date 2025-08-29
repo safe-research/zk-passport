@@ -1,5 +1,4 @@
-export const ZK_MODULE_ADDRESS = '0x3e32c8050bC934a3ECFF2a24fc0f83E663dcF02A'
-export const VERIFIER_ADDRESS = '0x0000000000000000000000000000000000000000'
+export const ZK_MODULE_ADDRESS = '0x79b4a5506a08B434473303b74B9e065C91E1f1e2'
 export const WITNESS_ADDRESS = '0x0000000000000000000000000000000000000001'
 export const ZK_MODULE_ABI = [
   {
@@ -91,35 +90,6 @@ export const ZK_MODULE_ABI = [
   {
     "inputs": [
       {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
-      }
-    ],
-    "name": "getBoundDataBytes",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "senderAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "chainId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "customData",
-        "type": "bytes"
-      }
-    ],
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "safeAddress",
         "type": "address"
@@ -205,7 +175,7 @@ export const ZK_MODULE_ABI = [
           },
           {
             "internalType": "uint256",
-            "name": "validityPeriodInDays",
+            "name": "validityPeriodInSeconds",
             "type": "uint256"
           },
           {
@@ -265,7 +235,7 @@ export const ZK_MODULE_ABI = [
           },
           {
             "internalType": "uint256",
-            "name": "validityPeriodInDays",
+            "name": "validityPeriodInSeconds",
             "type": "uint256"
           },
           {

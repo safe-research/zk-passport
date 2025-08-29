@@ -1,12 +1,12 @@
 {
   "contractName": "SafeRecovery",
   "network": "sepolia",
-  "contractAddress": "0x79b4a5506a08B434473303b74B9e065C91E1f1e2",
+  "contractAddress": "0x72F30f1F4c7Ce51098E87D65bE5278473c59df91",
   "verifierAddress": "0xBec82dec0747C9170D760D5aba9cc44929B17C05",
-  "deployedAt": "2025-08-29T08:13:57.250Z",
+  "deployedAt": "2025-08-29T07:26:50.785Z",
   "deployer": "0xa4070a4A4edf4118123BDCCf31C6A7D6e3A714AE",
   "blockNumber": null,
-  "transactionHash": "0x91f834d5cab1cd30d9134b55d28b6a3901dfa26584dccf6f7d542375054dfac2",
+  "transactionHash": "0x83131c0ce00d50c84b00fc75bed98ac24e674a5ed5271db8934811fc2e533ba0",
   "gasUsed": "1159356",
   "constructorArgs": [
     "0xBec82dec0747C9170D760D5aba9cc44929B17C05"

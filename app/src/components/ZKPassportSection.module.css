@@ -3,14 +3,21 @@
 /* Wrapper to ensure readable defaults */
 .zkpassportSection {
   display: block;
+  width: 100%;
+  margin: 24px 0;
+  position: relative;
+  z-index: 1;
 }
 
 .zkpassportContainer {
   background-color: white;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
   margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  position: relative;
 }
 
 .zkpassportTitle {
@@ -33,6 +40,8 @@
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  position: relative;
 }
 
 .zkpassportCardTitle {
@@ -242,6 +251,7 @@
 
 .zkpassportInputGroup {
   margin-bottom: 16px;
+  position: relative;
 }
 
 .zkpassportInputLabel {
@@ -349,4 +359,163 @@
   font-family: monospace;
   color: #059669;
   word-break: break-all;
+}
+
+/* Flow Step Indicator Styles */
+.flowStepIndicator {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  z-index: 1;
+}
+
+.flowTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.flowSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.flowStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  position: relative;
+}
+
+.flowStepCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.flowStepCirclePending {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #cbd5e1;
+}
+
+.flowStepCircleCurrent {
+  background-color: #3b82f6;
+  color: white;
+  border: 2px solid #2563eb;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.flowStepCircleCompleted {
+  background-color: #10b981;
+  color: white;
+  border: 2px solid #059669;
+}
+
+.flowStepCircleDisabled {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  border: 2px solid #e2e8f0;
+}
+
+.flowStepContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.flowStepTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.flowStepTitlePending {
+  color: #64748b;
+}
+
+.flowStepTitleCurrent {
+  color: #1e293b;
+}
+
+.flowStepTitleCompleted {
+  color: #059669;
+}
+
+.flowStepTitleDisabled {
+  color: #94a3b8;
+}
+
+.flowStepDescription {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.flowStepDescriptionPending {
+  color: #64748b;
+}
+
+.flowStepDescriptionCurrent {
+  color: #475569;
+}
+
+.flowStepDescriptionCompleted {
+  color: #047857;
+}
+
+.flowStepDescriptionDisabled {
+  color: #94a3b8;
+}
+
+.flowStepConnector {
+  position: absolute;
+  left: 19px;
+  top: 45px;
+  width: 2px;
+  height: 24px;
+  background-color: #e2e8f0;
+}
+
+.flowStepConnectorCompleted {
+  background-color: #10b981;
+}
+
+/* Responsive flow steps */
+@media (min-width: 768px) {
+  .flowSteps {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .flowStep {
+    flex: 1;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .flowStepConnector {
+    position: absolute;
+    left: calc(50% + 20px);
+    top: 20px;
+    width: calc(100% - 40px);
+    height: 2px;
+  }
+
+  .flowStep:last-child .flowStepConnector {
+    display: none;
+  }
 }

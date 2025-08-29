@@ -31,7 +31,7 @@ struct ProofVerificationParams {
     bytes32[] publicInputs;        // Public inputs for the proof
     bytes committedInputs;         // Committed inputs
     uint256[] committedInputCounts; // Counts for committed inputs
-    uint256 validityPeriodInDays;  // How long the proof is valid
+    uint256 validityPeriodInSeconds;  // How long the proof is valid
     string domain;                 // Domain scope
     string scope;                  // Proof scope
     bool devMode;                  // Whether in development mode
